@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.lifecycleScope
 import com.hld.networkdisk.network.ServerApi
 import com.hld.networkdisk.network.ServerSocketManager
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -26,7 +27,8 @@ import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.Socket
 
-class TestServerActivity : ComponentActivity() {
+@AndroidEntryPoint
+class ServerActivity : ComponentActivity() {
     private val portState: MutableState<Int> = mutableStateOf(-1)
 
     override fun onCreate(savedInstanceState: Bundle?) {

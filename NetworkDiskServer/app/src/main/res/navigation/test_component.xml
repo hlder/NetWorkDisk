@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.test.testaicode.component.HomeFragment"
+        android:label="HomeFragment" />
+
+    <fragment
+        android:id="@+id/component1Fragment"
+        android:name="com.example.component1.Component1Fragment"
+        android:label="Component1Fragment" />
+</navigation>

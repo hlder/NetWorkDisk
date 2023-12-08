@@ -17,13 +17,12 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:name=".NetWorkDiskApplication"
         android:supportsRtl="true"
         android:theme="@style/Theme.TestCompose">
 
         <activity android:name=".TestClientActivity"
-            android:exported="true">
-
-        </activity>
+            android:exported="true"/>
 
         <activity android:name=".ServerActivity"
             android:exported="true">

@@ -26,20 +26,29 @@ class SocketTransfer(
     private val mapClient = mutableMapOf<String, Socket>()
 
     init {
-        ServerSocketManager(
+        val messageServerSocketManager = ServerSocketManager(
             activity,
             onCreateListener,
             object : ServerSocketManager.OnConnectedListener {
                 override fun onConnected(socket: Socket) {
-                    println("==================================server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
+                    println("==================================message server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
                     start(socket)
                 }
-            })
+            }, SocketType.MESSAGE
+        )
+        val fileServerSocketManager = ServerSocketManager(
+            activity,
+            onCreateListener,
+            object : ServerSocketManager.OnConnectedListener {
+                override fun onConnected(socket: Socket) {
+                    println("==================================file server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
+                    mapClient["${socket.inetAddress.hostAddress}:${socket.port}"] = socket
+                }
+            }, SocketType.FILE
+        )
     }
 
-    fun start(socket: Socket) {
-        mapClient["${socket.inetAddress.hostAddress}:${socket.port}"] = socket
-
+    private fun start(socket: Socket) {
         lifecycleScope.launch(Dispatchers.IO) {
             receiveMessage(socket.getInputStream(), socket.getOutputStream()) // 接收消息和发送
         }

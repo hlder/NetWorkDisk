@@ -14,7 +14,8 @@ import java.net.Socket
 class ServerSocketManager(
     activity: ComponentActivity,
     private val onCreateListener: OnCreateListener,
-    private val onConnectedListener: OnConnectedListener
+    private val onConnectedListener: OnConnectedListener,
+    private val socketType: SocketType = SocketType.MESSAGE
 ) {
     private val lifecycleScope = activity.lifecycleScope
     private var serverSocket: ServerSocket? = null
@@ -31,7 +32,7 @@ class ServerSocketManager(
         if (serverSocket == null) {
             onCreateListener.onCreateError()
         } else {
-            onCreateListener.onCreateSuccess(serverSocket!!.localPort)
+            onCreateListener.onCreateSuccess(socketType, serverSocket!!.localPort)
             lifecycleScope.launch(Dispatchers.IO) {
                 doAccept()
             }
@@ -62,7 +63,7 @@ class ServerSocketManager(
 
     interface OnCreateListener {
         // 创建成功
-        fun onCreateSuccess(port: Int)
+        fun onCreateSuccess(socketType: SocketType, port: Int)
 
         // 创建失败
         fun onCreateError()
@@ -72,4 +73,8 @@ class ServerSocketManager(
         // 接收到链接
         fun onConnected(socket: Socket)
     }
+}
+
+enum class SocketType {
+    MESSAGE, FILE
 }

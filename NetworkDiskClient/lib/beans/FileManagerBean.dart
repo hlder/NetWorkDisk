@@ -1,9 +1,9 @@
 
-import 'package:testflutter/sockets/FileSocketClient.dart';
+import 'package:testflutter/sockets/MessageSocketClient.dart';
 
 class FileManagerBean{
-  FileSocketClient fileSocketClient;
+  MessageSocketClient messageSocketClient;
   String filePath;
 
-  FileManagerBean(this.fileSocketClient, this.filePath);
+  FileManagerBean(this.messageSocketClient, this.filePath);
 }

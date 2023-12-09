@@ -7,7 +7,7 @@ import 'package:testflutter/beans/FileManagerBean.dart';
 import 'package:testflutter/beans/SocketBaseMessage.dart';
 import 'package:testflutter/commons/MessageCodes.dart';
 import 'package:testflutter/pages/filemanager/FileListItem.dart';
-import 'package:testflutter/sockets/FileSocketClient.dart';
+import 'package:testflutter/sockets/MessageSocketClient.dart';
 import 'package:testflutter/widgets/CommonDialog.dart';
 import 'package:testflutter/widgets/LsButtonSure.dart';
 import 'package:testflutter/widgets/SelectDialog.dart';
@@ -27,7 +27,7 @@ class _FileManagerPageState extends State<FileManagerPage> {
   @override
   void initState() {
     super.initState();
-    widget.fileManagerBean.fileSocketClient.sendMessage(
+    widget.fileManagerBean.messageSocketClient.sendMessage(
         SocketBaseMessage(
             MessageCodes.CODE_FILE_LIST, widget.fileManagerBean.filePath),
         (message) {
@@ -133,7 +133,7 @@ class _FileManagerPageState extends State<FileManagerPage> {
                   if (item.isDirectory) {
                     Navigator.pushNamed(context, Routers.fileManagerPage,
                         arguments: FileManagerBean(
-                            widget.fileManagerBean.fileSocketClient,
+                            widget.fileManagerBean.messageSocketClient,
                             "${widget.fileManagerBean.filePath}/${item.name}"));
                   } else {
                     SelectDialog(context, item.name, [

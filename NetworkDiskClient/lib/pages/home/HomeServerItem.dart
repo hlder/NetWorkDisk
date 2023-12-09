@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:testflutter/Routers.dart';
 import 'package:testflutter/beans/FileManagerBean.dart';
 import 'package:testflutter/beans/ServerBean.dart';
-import 'package:testflutter/sockets/FileSocketClient.dart';
+import 'package:testflutter/sockets/MessageSocketClient.dart';
 import 'package:testflutter/widgets/CommonDialog.dart';
 
 class HomeServerItem extends StatefulWidget {
@@ -16,12 +16,12 @@ class HomeServerItem extends StatefulWidget {
 
 class _HomeServerItemState extends State<HomeServerItem> {
   void _doConnect() {
-    FileSocketClient fileSocketClient = FileSocketClient();
-    fileSocketClient.doContent(widget.serverBean.ip, 20001,
+    MessageSocketClient messageSocketClient = MessageSocketClient();
+    messageSocketClient.doContent(widget.serverBean.ip, 20001,
         onSocketContentedSuccess: () {
       // 连接成功
       Navigator.pushNamed(context, Routers.fileManagerPage,
-          arguments: FileManagerBean(fileSocketClient, ""));
+          arguments: FileManagerBean(messageSocketClient, ""));
     }, onSocketContentedError: () {
       // 链接失败
       _showDisconnectDialog("连接失败");

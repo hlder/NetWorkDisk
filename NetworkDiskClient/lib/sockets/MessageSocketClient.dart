@@ -9,7 +9,7 @@ typedef OnSocketDisconnect(); // socket不明原因，断开了
 
 typedef OnCallBack(SocketBaseMessage message);
 
-class FileSocketClient {
+class MessageSocketClient {
   Socket? socket;
   Map<int, OnCallBack> mapCallBack = {};
   Utf8Decoder utf8decoder = const Utf8Decoder();

@@ -11,14 +11,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  void a() async{
-    var channel = const MethodChannel("flutter_plugin_base");
-    var result = await channel.invokeMethod("getPlatformVersion");
-    print('-------------------------a:result:$result');
-  }
   @override
   Widget build(BuildContext context) {
-    a();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,

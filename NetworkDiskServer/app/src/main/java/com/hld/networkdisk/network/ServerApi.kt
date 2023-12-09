@@ -26,7 +26,9 @@ class ServerApi(
             override suspend fun onRequest(data: String): String {
                 println("=========================server收到消息：$data")
                 val messageBean = gson.fromJson(data, MessageBean::class.java)
-                return parseMessage(messageBean)
+                return parseMessage(messageBean).apply {
+                    println("=========================返回数据：$this")
+                }
             }
         })
 

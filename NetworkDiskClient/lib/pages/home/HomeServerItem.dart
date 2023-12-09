@@ -60,8 +60,7 @@ class _HomeServerItemState extends State<HomeServerItem> {
             padding: const EdgeInsets.all(10),
             child: Column(
               children: [
-                Text(
-                    "手机:${widget.serverBean.phoneName}  型号:${widget.serverBean.phoneModel}"),
+                Text("手机:${widget.serverBean.phoneName}  型号:${widget.serverBean.phoneModel}"),
                 Text("连接地址:${widget.serverBean.ip}:${widget.serverBean.port}"),
               ],
             ),

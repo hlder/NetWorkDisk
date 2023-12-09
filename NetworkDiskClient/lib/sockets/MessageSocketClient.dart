@@ -23,7 +23,7 @@ class MessageSocketClient {
       OnSocketContentedError? onSocketContentedError,
       OnSocketDisconnect? onSocketDisconnect}) {
     this.onSocketDisconnect = onSocketDisconnect;
-    Future<Socket> futureSocket = Socket.connect(ip, port, timeout: Duration(milliseconds: 1000));
+    Future<Socket> futureSocket = Socket.connect(ip, port, timeout: const Duration(milliseconds: 1000));
     futureSocket.then((value) => {
               print("============================链接成功"),
               socket = value,

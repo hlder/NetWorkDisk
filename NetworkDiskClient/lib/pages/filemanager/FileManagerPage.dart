@@ -1,12 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:testflutter/Routers.dart';
 import 'package:testflutter/beans/FileBean.dart';
 import 'package:testflutter/beans/FileManagerBean.dart';
+import 'package:testflutter/beans/MessageTransferFileBean.dart';
 import 'package:testflutter/beans/SocketBaseMessage.dart';
 import 'package:testflutter/commons/MessageCodes.dart';
 import 'package:testflutter/pages/filemanager/FileListItem.dart';
+import 'package:testflutter/sockets/FileTransferSocketClient.dart';
 import 'package:testflutter/sockets/MessageSocketClient.dart';
 import 'package:testflutter/widgets/CommonDialog.dart';
 import 'package:testflutter/widgets/LsButtonSure.dart';
@@ -40,27 +43,6 @@ class _FileManagerPageState extends State<FileManagerPage> {
         print('============item:${item.toString()}');
       }
     });
-    // fileSocketClient.doContent("192.168.1.18", 20001,
-    //     onSocketContentedSuccess: () {
-    //   fileSocketClient.sendMessage(
-    //       SocketBaseMessage(MessageCodes.CODE_FILE_LIST, widget.baseFilePath),
-    //       (message) {
-    //     // 获取到文件列表
-    //     // message.message
-    //     List<dynamic> listJson = jsonDecode(message.message);
-    //     _listFile = FileBean.fromJsonArr(listJson);
-    //     setState(() {});
-    //     for (var item in _listFile!) {
-    //       print('============item:${item.toString()}');
-    //     }
-    //   });
-    // }, onSocketContentedError: () {
-    //   // 链接失败
-    //   _showDisconnectDialog("连接失败");
-    // }, onSocketDisconnect: () {
-    //   // 链接位置情况断开了
-    //   _showDisconnectDialog("连接被断开了");
-    // });
   }
 
   void _showDisconnectDialog(String content) async {
@@ -142,12 +124,35 @@ class _FileManagerPageState extends State<FileManagerPage> {
                       "分享",
                       "详情",
                       "取消"
-                    ]).show().then((value) =>
-                        {print('=======================value:${value}')});
+                    ]).show().then((value) => {
+                          if(value == 0){ // 下载并打开
+
+                          } else if(value == 1){ // 下载
+                            print('================ip:${widget.fileManagerBean.messageSocketClient.socket!.address.host}'),
+
+                            a("${widget.fileManagerBean.filePath}/${item.name}")
+                          },
+                          print('=======================value:${value}')
+                        });
                   }
                 },
                 child: FileListItem(item));
           });
     }
+  }
+
+  void a(String filePath) async {
+    String ip = widget.fileManagerBean.messageSocketClient.socket!.address.host;
+    Socket? socket = await FileTransferSocketClient.instance.createSocket(ip);
+
+    if (socket != null) {
+      String json = MessageTransferFileBean(socket.address.host, socket.port, filePath, false, 1000).toJsonString();
+      SocketBaseMessage message = SocketBaseMessage(MessageCodes.CODE_CLIENT_RECEIVE_FROM_SERVER_FILE, json);
+      widget.fileManagerBean.messageSocketClient.sendMessage(message,(msg) {
+          FileTransferSocketClient.instance.downloadFile(socket, File("/sdcard/Android/data/com.example.flutter.testflutter/files/client"+filePath));
+      });
+      // context
+    }
+
   }
 }

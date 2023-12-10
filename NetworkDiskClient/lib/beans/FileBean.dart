@@ -12,6 +12,23 @@ class FileBean {
   FileBean(this.name, this.absolutePath, this.suffix, this.isDirectory,
       this.fileLength, this.lastModified);
 
+  String getFileSizeStr(){
+    int B = fileLength;
+    if (B < 1024) {
+      return "${B}B";
+    }
+    double KB = B / 1024;
+    if (KB < 1024) {
+      return "${KB.toStringAsFixed(2)}KB";
+    }
+    double MB = KB / 1024;
+    if (MB < 1024) {
+      return "${MB.toStringAsFixed(2)}MB";
+    }
+    double GB = MB / 1024;
+    return "${GB.toStringAsFixed(2)}GB";
+  }
+
   @override
   String toString() {
     return 'FileBean{name: $name, absolutePath: $absolutePath, suffix: $suffix, isDirectory: $isDirectory, fileLength: $fileLength, lastModified: $lastModified}';

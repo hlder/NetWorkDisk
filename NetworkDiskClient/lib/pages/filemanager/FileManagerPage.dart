@@ -2,18 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:testflutter/Routers.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:testflutter/beans/FileBean.dart';
 import 'package:testflutter/beans/FileManagerBean.dart';
-import 'package:testflutter/beans/MessageTransferFileBean.dart';
 import 'package:testflutter/beans/SocketBaseMessage.dart';
+import 'package:testflutter/commons/FileCommons.dart';
 import 'package:testflutter/commons/MessageCodes.dart';
 import 'package:testflutter/pages/filemanager/FileListItem.dart';
-import 'package:testflutter/sockets/FileTransferSocketClient.dart';
-import 'package:testflutter/sockets/MessageSocketClient.dart';
 import 'package:testflutter/widgets/CommonDialog.dart';
-import 'package:testflutter/widgets/LsButtonSure.dart';
-import 'package:testflutter/widgets/SelectDialog.dart';
 
 class FileManagerPage extends StatefulWidget {
   FileManagerPage(this.fileManagerBean, {super.key});
@@ -27,9 +23,13 @@ class FileManagerPage extends StatefulWidget {
 class _FileManagerPageState extends State<FileManagerPage> {
   List<FileBean>? _listFile = null;
 
+  void initDirector()async{
+    Directory("${await FileCommons.getBasePath()}/${widget.fileManagerBean.filePath}").createSync();
+  }
   @override
   void initState() {
     super.initState();
+    initDirector();
     widget.fileManagerBean.messageSocketClient.sendMessage(
         SocketBaseMessage(
             MessageCodes.CODE_FILE_LIST, widget.fileManagerBean.filePath),
@@ -110,49 +110,9 @@ class _FileManagerPageState extends State<FileManagerPage> {
           itemCount: listCount,
           itemBuilder: (BuildContext context, int index) {
             FileBean item = _listFile![index];
-            return GestureDetector(
-                onTap: () {
-                  if (item.isDirectory) {
-                    Navigator.pushNamed(context, Routers.fileManagerPage,
-                        arguments: FileManagerBean(
-                            widget.fileManagerBean.messageSocketClient,
-                            "${widget.fileManagerBean.filePath}/${item.name}"));
-                  } else {
-                    SelectDialog(context, item.name, [
-                      "下载并打开",
-                      "下载",
-                      "分享",
-                      "详情",
-                      "取消"
-                    ]).show().then((value) => {
-                          if(value == 0){ // 下载并打开
-
-                          } else if(value == 1){ // 下载
-                            print('================ip:${widget.fileManagerBean.messageSocketClient.socket!.address.host}'),
-
-                            a("${widget.fileManagerBean.filePath}/${item.name}")
-                          },
-                          print('=======================value:${value}')
-                        });
-                  }
-                },
-                child: FileListItem(item));
+            return FileListItem(item,widget.fileManagerBean);
           });
+
     }
-  }
-
-  void a(String filePath) async {
-    String ip = widget.fileManagerBean.messageSocketClient.socket!.address.host;
-    Socket? socket = await FileTransferSocketClient.instance.createSocket(ip);
-
-    if (socket != null) {
-      String json = MessageTransferFileBean(socket.address.host, socket.port, filePath, false, 1000).toJsonString();
-      SocketBaseMessage message = SocketBaseMessage(MessageCodes.CODE_CLIENT_RECEIVE_FROM_SERVER_FILE, json);
-      widget.fileManagerBean.messageSocketClient.sendMessage(message,(msg) {
-          FileTransferSocketClient.instance.downloadFile(socket, File("/sdcard/Android/data/com.example.flutter.testflutter/files/client"+filePath));
-      });
-      // context
-    }
-
   }
 }

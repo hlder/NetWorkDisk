@@ -73,7 +73,7 @@ class _TestHomeState extends State<TestHome> {
               margin: const EdgeInsets.only(top: 10),
               child: TextButton(onPressed: (){
                 FileTransferSocketClient.serverPort = int.parse(filePortController.text);
-                _doConnect("127.0.0.1", int.parse(messagePortController.text));
+                _doConnect("192.168.1.120", int.parse(messagePortController.text));
               }, child: const Text("点击连接")),
             ),
           ],

@@ -26,7 +26,7 @@ class SocketTransfer(
     private val mapClient = mutableMapOf<String, Socket>()
 
     init {
-        val messageServerSocketManager = ServerSocketManager(
+        val messageServerSocketManager = ServerSocketManager( // 用于发送问你消息。
             activity,
             onCreateListener,
             object : ServerSocketManager.OnConnectedListener {
@@ -36,7 +36,7 @@ class SocketTransfer(
                 }
             }, SocketType.MESSAGE
         )
-        val fileServerSocketManager = ServerSocketManager(
+        val fileServerSocketManager = ServerSocketManager( // 用于传输文件
             activity,
             onCreateListener,
             object : ServerSocketManager.OnConnectedListener {
@@ -64,7 +64,7 @@ class SocketTransfer(
     /**
      * 发送文件
      */
-    fun getSendFile(address: String, port: Int): OutputStream? {
+    fun getSendFileStream(address: String, port: Int): OutputStream? {
         return mapClient["${address}:$port"]?.getOutputStream()
     }
 

@@ -13,6 +13,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.lifecycle.lifecycleScope
+import com.hld.networkdisk.filemanager.FileScan
 import com.hld.networkdisk.network.ServerApi
 import com.hld.networkdisk.network.ServerSocketManager
 import com.hld.networkdisk.network.SocketType
@@ -36,6 +37,9 @@ class ServerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        lifecycleScope.launch {
+            FileScan(this@ServerActivity).doScan()
+        }
         val uri = Uri.parse("qqqqq/aaaa?bbb=1&ccccc=8")
         println("=================uri path:${uri.path}")
         uri.queryParameterNames.forEach {

@@ -13,7 +13,7 @@ android {
     aidl = true
   }
   defaultConfig {
-    applicationId = "com.hld.networkdisk"
+    applicationId = "com.hld.networkdisk.server"
     minSdk = libs.versions.minSdk.get().toInt()
     targetSdk = libs.versions.targetSdk.get().toInt()
     versionCode = 1

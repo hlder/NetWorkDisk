@@ -3,6 +3,8 @@ package com.hld.networkdisk.filemanager
 import android.content.Context
 import com.hld.networkdisk.beans.FileBean
 import com.hld.networkdisk.beans.MessageTransferFileBean
+import com.hld.networkdisk.commons.Constants
+import com.hld.networkdisk.commons.getFileSuffix
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -13,7 +15,7 @@ import java.io.OutputStream
 import java.util.LinkedList
 
 class FileManager(context: Context) {
-    private val baseFilePath = context.getExternalFilesDir("server")?.absolutePath ?: ""
+    private val baseFilePath = Constants.baseFilePath(context)
 
     /**
      * 查询文件列表
@@ -26,7 +28,7 @@ class FileManager(context: Context) {
                 FileBean(
                     name = file.name,
                     absolutePath = file.absolutePath.replace(baseFilePath, ""),
-                    suffix = getFileSuffix(file),
+                    suffix = file.getFileSuffix(),
                     isDirectory = file.isDirectory,
                     fileLength = file.length(),
                     lastModified = file.lastModified(),
@@ -112,20 +114,10 @@ class FileManager(context: Context) {
     private fun fileReName(filePath: String): File {
         val file = File(filePath)
         if (file.exists()) { // 已存在，需要换名
-            val suffix = getFileSuffix(file)
+            val suffix = file.getFileSuffix()
             val newFilePath = filePath.replace(".$suffix", "(1).$suffix")
             return fileReName(newFilePath)
         }
         return file
-    }
-
-    // 获取文件的后缀
-    private fun getFileSuffix(file: File): String {
-        val str = file.absolutePath.split(".")
-        return if (str.isNotEmpty()) {
-            str[str.size - 1]
-        } else {
-            ""
-        }
     }
 }

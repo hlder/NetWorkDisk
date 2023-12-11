@@ -7,4 +7,5 @@ data class FileBean(
     val isDirectory: Boolean, // 是否是文件夹
     val fileLength: Long, // 文件大小
     val lastModified: Long, // 最近修改的时间
+    var previewImageBase64: String? = null // 预览的base64
 )

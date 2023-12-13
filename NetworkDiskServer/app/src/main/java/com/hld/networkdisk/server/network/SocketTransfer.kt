@@ -1,4 +1,4 @@
-package com.hld.networkdisk.network
+package com.hld.networkdisk.server.network
 
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope

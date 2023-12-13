@@ -1,4 +1,4 @@
-package com.hld.networkdisk.commons
+package com.hld.networkdisk.server.commons
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

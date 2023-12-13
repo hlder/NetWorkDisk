@@ -1,26 +1,24 @@
-package com.hld.networkdisk.filemanager
+package com.hld.networkdisk.server.filemanager
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import com.hld.networkdisk.commons.Constants
-import com.hld.networkdisk.commons.bitmapToBase64
-import com.hld.networkdisk.commons.getFileSuffix
-import com.hld.networkdisk.data.AppDatabase
-import com.hld.networkdisk.data.PreviewDao
+import com.hld.networkdisk.server.commons.Constants
+import com.hld.networkdisk.server.commons.bitmapToBase64
+import com.hld.networkdisk.server.commons.getFileSuffix
+import com.hld.networkdisk.server.data.AppDatabase
+import com.hld.networkdisk.server.data.PreviewDao
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class FileScan(private val context: Context) {
+    private val basePath = Constants.baseFilePath(context)
+
     /**
      * 执行扫描
      */
-    suspend fun doScan() = coroutineScope {
-        launch(Dispatchers.IO) {
-            val path = Constants.baseFilePath(context)
-            scan(File(path))
-        }
+    suspend fun doScan() = withContext(Dispatchers.IO){
+        scan(File(basePath))
     }
 
     private fun scan(file: File) {
@@ -46,7 +44,7 @@ class FileScan(private val context: Context) {
                     previewBase64?.let {
                         AppDatabase.getInstance(context).previewDao().insert(
                             PreviewDao.Bean(
-                                fileAbsolutePath = file.absolutePath,
+                                fileAbsolutePath = file.absolutePath.replace(basePath, ""),
                                 previewImageBase64 = previewBase64
                             )
                         )

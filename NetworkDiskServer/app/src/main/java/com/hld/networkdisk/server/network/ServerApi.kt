@@ -1,14 +1,14 @@
-package com.hld.networkdisk.network
+package com.hld.networkdisk.server.network
 
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
-import com.hld.networkdisk.beans.MessageBean
-import com.hld.networkdisk.beans.MessageCodes
-import com.hld.networkdisk.beans.MessageTransferFileBean
-import com.hld.networkdisk.data.AppDatabase
-import com.hld.networkdisk.data.PreviewDao
-import com.hld.networkdisk.filemanager.FileManager
+import com.hld.networkdisk.server.beans.MessageBean
+import com.hld.networkdisk.server.beans.MessageCodes
+import com.hld.networkdisk.server.beans.MessageTransferFileBean
+import com.hld.networkdisk.server.data.AppDatabase
+import com.hld.networkdisk.server.data.PreviewDao
+import com.hld.networkdisk.server.filemanager.FileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

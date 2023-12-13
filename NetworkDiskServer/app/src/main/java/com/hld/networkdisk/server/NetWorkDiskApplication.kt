@@ -1,4 +1,4 @@
-package com.hld.networkdisk
+package com.hld.networkdisk.server
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp

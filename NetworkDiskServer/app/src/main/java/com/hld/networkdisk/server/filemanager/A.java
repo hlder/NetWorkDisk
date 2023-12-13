@@ -1,4 +1,4 @@
-package com.hld.networkdisk.filemanager;
+package com.hld.networkdisk.server.filemanager;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

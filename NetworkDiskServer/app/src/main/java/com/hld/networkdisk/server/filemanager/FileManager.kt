@@ -1,10 +1,10 @@
-package com.hld.networkdisk.filemanager
+package com.hld.networkdisk.server.filemanager
 
 import android.content.Context
-import com.hld.networkdisk.beans.FileBean
-import com.hld.networkdisk.beans.MessageTransferFileBean
-import com.hld.networkdisk.commons.Constants
-import com.hld.networkdisk.commons.getFileSuffix
+import com.hld.networkdisk.server.beans.FileBean
+import com.hld.networkdisk.server.beans.MessageTransferFileBean
+import com.hld.networkdisk.server.commons.Constants
+import com.hld.networkdisk.server.commons.getFileSuffix
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException

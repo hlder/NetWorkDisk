@@ -1,4 +1,4 @@
-package com.hld.networkdisk.beans
+package com.hld.networkdisk.server.beans
 
 data class MessageBean(
     val version: Int,

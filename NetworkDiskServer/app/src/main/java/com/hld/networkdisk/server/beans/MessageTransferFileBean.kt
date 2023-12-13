@@ -1,4 +1,4 @@
-package com.hld.networkdisk.beans
+package com.hld.networkdisk.server.beans
 
 /**
  * 需要收发文件时，客户端发来的message

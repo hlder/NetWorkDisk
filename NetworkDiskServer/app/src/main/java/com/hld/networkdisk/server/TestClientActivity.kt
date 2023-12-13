@@ -1,4 +1,4 @@
-package com.hld.networkdisk
+package com.hld.networkdisk.server
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -8,11 +8,10 @@ import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
-import com.hld.networkdisk.beans.MessageBean
-import com.hld.networkdisk.beans.MessageCodes
-import com.hld.networkdisk.beans.MessageTransferFileBean
+import com.hld.networkdisk.server.beans.MessageBean
+import com.hld.networkdisk.server.beans.MessageCodes
+import com.hld.networkdisk.server.beans.MessageTransferFileBean
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -20,7 +19,6 @@ import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.PrintWriter

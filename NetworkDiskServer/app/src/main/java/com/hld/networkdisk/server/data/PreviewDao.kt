@@ -1,4 +1,4 @@
-package com.hld.networkdisk.data
+package com.hld.networkdisk.server.data
 
 import androidx.room.Dao
 import androidx.room.Entity

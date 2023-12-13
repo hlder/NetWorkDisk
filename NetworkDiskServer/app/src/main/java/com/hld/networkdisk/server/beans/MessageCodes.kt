@@ -1,4 +1,4 @@
-package com.hld.networkdisk.beans
+package com.hld.networkdisk.server.beans
 
 object MessageCodes {
     const val CODE_FILE_LIST = 1 // 获取文件列表

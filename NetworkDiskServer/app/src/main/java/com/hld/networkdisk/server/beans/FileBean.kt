@@ -1,4 +1,4 @@
-package com.hld.networkdisk.beans
+package com.hld.networkdisk.server.beans
 
 data class FileBean(
     val name: String, // 文件名

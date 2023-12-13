@@ -1,4 +1,4 @@
-package com.hld.networkdisk
+package com.hld.networkdisk.server
 
 import android.content.Intent
 import android.net.Uri
@@ -13,22 +13,13 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.lifecycle.lifecycleScope
-import com.hld.networkdisk.filemanager.FileScan
-import com.hld.networkdisk.network.ServerApi
-import com.hld.networkdisk.network.ServerSocketManager
-import com.hld.networkdisk.network.SocketType
+import com.hld.networkdisk.server.filemanager.FileScan
+import com.hld.networkdisk.server.network.ServerApi
+import com.hld.networkdisk.server.network.ServerSocketManager
+import com.hld.networkdisk.server.network.SocketType
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
-import java.io.PrintWriter
-import java.net.Socket
 
 @AndroidEntryPoint
 class ServerActivity : ComponentActivity() {
@@ -37,9 +28,6 @@ class ServerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch {
-            FileScan(this@ServerActivity).doScan()
-        }
         val uri = Uri.parse("qqqqq/aaaa?bbb=1&ccccc=8")
         println("=================uri path:${uri.path}")
         uri.queryParameterNames.forEach {
@@ -56,6 +44,10 @@ class ServerActivity : ComponentActivity() {
                 portFileState
             }
             Test("${text.value}","${textFile.value}") { click() }
+        }
+
+        lifecycleScope.launch {
+            FileScan(this@ServerActivity).doScan()
         }
 
         ServerApi(this, object : ServerSocketManager.OnCreateListener {

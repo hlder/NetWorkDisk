@@ -13,6 +13,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.lifecycle.lifecycleScope
+import com.hld.networkdisk.server.commons.Constants
 import com.hld.networkdisk.server.filemanager.FileScan
 import com.hld.networkdisk.server.network.ServerApi
 import com.hld.networkdisk.server.network.ServerSocketManager
@@ -116,6 +117,7 @@ fun Test(textStr:String,textFileStr:String, onClick: () -> Unit) {
     Column {
         Text(text = "消息端口:${textStr}")
         Text(text = "文件端口:${textFileStr}")
+        Text(text = "预览图端口:${Constants.SERVER_PORT_PREVIEW_IMAGE}")
         Button(onClick = onClick) {
             Text(text = "点击")
         }

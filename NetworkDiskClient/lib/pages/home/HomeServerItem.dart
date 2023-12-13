@@ -3,6 +3,7 @@ import 'package:testflutter/Routers.dart';
 import 'package:testflutter/beans/FileManagerBean.dart';
 import 'package:testflutter/beans/ServerBean.dart';
 import 'package:testflutter/sockets/MessageSocketClient.dart';
+import 'package:testflutter/sockets/PreviewImageSocketClient.dart';
 import 'package:testflutter/widgets/CommonDialog.dart';
 
 class HomeServerItem extends StatefulWidget {
@@ -17,7 +18,7 @@ class HomeServerItem extends StatefulWidget {
 class _HomeServerItemState extends State<HomeServerItem> {
   void _doConnect() {
     MessageSocketClient messageSocketClient = MessageSocketClient();
-    messageSocketClient.doContent(widget.serverBean.ip, 20001,
+    messageSocketClient.doContent(widget.serverBean.ip, widget.serverBean.port,
         onSocketContentedSuccess: () {
       // 连接成功
       Navigator.pushNamed(context, Routers.fileManagerPage,
@@ -50,6 +51,7 @@ class _HomeServerItemState extends State<HomeServerItem> {
       child: Center(
         child: GestureDetector(
           onTap: () {
+            PreviewImageSocketClient.client.doConnect(widget.serverBean.ip, widget.serverBean.preViewImagePort);
             _doConnect();
           },
           child: Container(

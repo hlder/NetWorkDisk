@@ -13,6 +13,7 @@ import java.net.Socket
  */
 class ServerSocketManager(
     activity: ComponentActivity,
+    private val port: Int,
     private val onCreateListener: OnCreateListener,
     private val onConnectedListener: OnConnectedListener,
     private val socketType: SocketType = SocketType.MESSAGE
@@ -52,7 +53,7 @@ class ServerSocketManager(
 
     private fun createServerSocket(): ServerSocket? {
         try {
-            return ServerSocket(1000 + ((Math.random()) * 60000).toInt())
+            return ServerSocket(port)
         } catch (e: RuntimeException) {
             e.printStackTrace()
         } catch (e: IOException) {
@@ -76,5 +77,5 @@ class ServerSocketManager(
 }
 
 enum class SocketType {
-    MESSAGE, FILE
+    MESSAGE, FILE, PREVIEW
 }

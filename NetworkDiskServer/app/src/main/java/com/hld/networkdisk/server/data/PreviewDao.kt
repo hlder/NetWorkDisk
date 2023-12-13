@@ -11,10 +11,10 @@ import androidx.room.Query
 interface PreviewDao {
 
     @Query("SELECT * from FilePreviewData WHERE fileAbsolutePath = :absolutePath")
-    fun query(absolutePath: String): Bean
+    fun query(absolutePath: String): Bean?
 
     @Query("SELECT * from FilePreviewData WHERE fileAbsolutePath in (:paths)")
-    fun query(paths: Array<String>): List<Bean>
+    fun query(paths: Array<String>): List<Bean>?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(bean: Bean)

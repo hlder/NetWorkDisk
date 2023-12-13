@@ -11,6 +11,7 @@ import 'package:testflutter/commons/FileCommons.dart';
 import 'package:testflutter/commons/MessageCodes.dart';
 import 'package:testflutter/pages/filemanager/FileIcon.dart';
 import 'package:testflutter/sockets/FileTransferSocketClient.dart';
+import 'package:testflutter/sockets/PreviewImageSocketClient.dart';
 import 'package:testflutter/utils/TimeUtils.dart';
 import 'package:testflutter/widgets/SelectDialog.dart';
 
@@ -123,6 +124,9 @@ class _FileListItemState extends State<FileListItem> {
   void initState() {
     super.initState();
     isLocalHavaFile();
+    PreviewImageSocketClient.client.queryPreviewImageBase64(widget._fileBean.absolutePath, (imgBase64) => {
+      print('-------------------------查询到base64：${imgBase64.length}')
+    });
   }
 
   @override

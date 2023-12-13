@@ -2,6 +2,9 @@ package com.hld.networkdisk.server.network
 
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
+import com.hld.networkdisk.server.commons.Constants.SERVER_PORT_FILE
+import com.hld.networkdisk.server.commons.Constants.SERVER_PORT_MESSAGE
+import com.hld.networkdisk.server.commons.Constants.SERVER_PORT_PREVIEW_IMAGE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
@@ -20,24 +23,27 @@ import java.net.Socket
 class SocketTransfer(
     activity: ComponentActivity,
     onCreateListener: ServerSocketManager.OnCreateListener,
-    private val onRequestListener: OnRequestListener
+    private val onMessageRequestListener: OnRequestListener,
+    private val onPreviewImageRequestListener: OnRequestListener,
 ) {
     private val lifecycleScope = activity.lifecycleScope
     private val mapClient = mutableMapOf<String, Socket>()
 
     init {
         val messageServerSocketManager = ServerSocketManager( // 用于发送问你消息。
-            activity,
+            activity, SERVER_PORT_MESSAGE,
             onCreateListener,
             object : ServerSocketManager.OnConnectedListener {
                 override fun onConnected(socket: Socket) {
                     println("==================================message server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
-                    start(socket)
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        receiveMessage(socket.getInputStream(), socket.getOutputStream()) // 接收消息和发送
+                    }
                 }
             }, SocketType.MESSAGE
         )
         val fileServerSocketManager = ServerSocketManager( // 用于传输文件
-            activity,
+            activity, SERVER_PORT_FILE,
             onCreateListener,
             object : ServerSocketManager.OnConnectedListener {
                 override fun onConnected(socket: Socket) {
@@ -46,12 +52,21 @@ class SocketTransfer(
                 }
             }, SocketType.FILE
         )
-    }
-
-    private fun start(socket: Socket) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            receiveMessage(socket.getInputStream(), socket.getOutputStream()) // 接收消息和发送
-        }
+        val previewImageSocketManager = ServerSocketManager( // 用于获取预览图
+            activity, SERVER_PORT_PREVIEW_IMAGE,
+            onCreateListener,
+            object : ServerSocketManager.OnConnectedListener {
+                override fun onConnected(socket: Socket) {
+                    println("==================================file server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        receivePreviewImage(
+                            socket.getInputStream(),
+                            socket.getOutputStream()
+                        ) // 接收消息和发送
+                    }
+                }
+            }, SocketType.PREVIEW
+        )
     }
 
     /**
@@ -82,7 +97,27 @@ class SocketTransfer(
             }
         }.flowOn(Dispatchers.IO).collectLatest {
             // 收到一条消息
-            val message = onRequestListener.onRequest(it)
+            val message = onMessageRequestListener.onRequest(it)
+            printWriter.println(message)
+            printWriter.flush()
+        }
+    }
+
+    /**
+     * 等待接收
+     */
+    private suspend fun receivePreviewImage(inputStream: InputStream, outPutStream: OutputStream) {
+        val bufferedReader = BufferedReader(InputStreamReader(inputStream))
+        val printWriter = PrintWriter(outPutStream)
+        flow<String> {
+            var line = bufferedReader.readLine()
+            while (line != null) {
+                emit(line)
+                line = bufferedReader.readLine()
+            }
+        }.flowOn(Dispatchers.IO).collectLatest {
+            // 收到一条消息
+            val message = onPreviewImageRequestListener.onRequest(it)
             printWriter.println(message)
             printWriter.flush()
         }

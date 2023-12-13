@@ -21,7 +21,7 @@ class _HomeState extends State<Home> {
         mainAxisSize: MainAxisSize.min,
         children: [
           //   31099
-          HomeServerItem(ServerBean("127.0.0.1", 9584, "小米", "mi10", ""))
+          HomeServerItem(ServerBean("127.0.0.1", 20810, 20811, 20812, "小米", "mi10", ""))
         ],
       ),
     );

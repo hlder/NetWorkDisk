@@ -32,6 +32,14 @@ class ServerApi(
                     println("=========================返回数据：$this")
                 }
             }
+        }, object : SocketTransfer.OnRequestListener {
+            override suspend fun onRequest(data: String): String {
+                val messageBean = gson.fromJson(data, MessageBean::class.java)
+                val path = messageBean.message
+                println("=========================preViewImage收到消息：$path")
+                val previewBean = AppDatabase.getInstance(activity).previewDao().query(path)
+                return resultSuccess(messageBean, previewBean?.previewImageBase64?:"")
+            }
         })
 
     /**
@@ -43,7 +51,7 @@ class ServerApi(
                 val listFileBean = fileManager.queryFileList(fromMessage.message)
                 val listPreview = AppDatabase.getInstance(activity).previewDao().query(listFileBean.map { it.absolutePath }.toTypedArray())
                 listFileBean.forEach { item->
-                    val bean: PreviewDao.Bean? = listPreview.find { it.fileAbsolutePath == item.absolutePath }
+                    val bean: PreviewDao.Bean? = listPreview?.find { it.fileAbsolutePath == item.absolutePath }
                     item.previewImageBase64 = bean?.previewImageBase64
                 }
                 return resultSuccess(fromMessage, listFileBean)

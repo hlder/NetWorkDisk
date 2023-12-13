@@ -31,12 +31,12 @@ class FileScan(private val context: Context) {
             if (suffix == "png" || suffix == "jpg" || suffix == "webp" || suffix == "jpeg") {
                 val options = BitmapFactory.Options().apply { inJustDecodeBounds = false }
                 val bitmap = BitmapFactory.decodeFile(file.absolutePath, options)
-                println("======================fileScan:${bitmap} absolutePath:${file.absolutePath}")
                 bitmap?.let {
                     var bl = Math.min(bitmap.width / 120f, bitmap.height / 120f)
                     if (bl < 1) {
                         bl = 1F
                     }
+                    println("======================width:${bitmap.width}  height:${bitmap.height}  bl：${bl} absolutePath:${file.absolutePath.replace(basePath, "")}")
                     options.inSampleSize = bl.toInt()
                     options.inJustDecodeBounds = false
                     val previewBase64 =

@@ -29,19 +29,19 @@ fun SunFlowerNavHost(
         composable(route = Routers.HOME) {
             HomePage { navController.navigate(Routers.FILE_LIST) }
         }
-        composable(route = Routers.FILE_LIST){
+        composable(route = Routers.FILE_LIST) {
             FileListPage { path ->
-                navController.navigate("${Routers.FILE_LIST}/$path")
+                navController.navigate("${Routers.FILE_LIST}?filePath=$path")
             }
         }
         composable(
-            route = "${Routers.FILE_LIST}/{filePath}",
+            route = "${Routers.FILE_LIST}?filePath={filePath}",
             arguments = listOf(navArgument("filePath") {
                 type = NavType.StringType
             })
         ) {
             FileListPage { path ->
-                navController.navigate("${Routers.FILE_LIST}/$path")
+                navController.navigate("${Routers.FILE_LIST}?filePath=$path")
             }
         }
     }

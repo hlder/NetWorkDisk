@@ -1,6 +1,7 @@
 package com.hld.networkdisk.client
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.hld.networkdisk.client.beans.FileBean
 import com.hld.networkdisk.client.beans.MessageTransferFileBean
@@ -10,6 +11,7 @@ import com.hld.networkdisk.client.network.FileTransferRequest
 import com.hld.networkdisk.client.network.MessageRequest
 import com.hld.networkdisk.client.network.PreviewRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import java.io.File
 import java.lang.Exception
 import javax.inject.Inject
@@ -24,11 +26,13 @@ class MainViewModel @Inject constructor() : ViewModel() {
 
     private val gson: Gson = Gson()
 
-    suspend fun doStart(ip: String) {
+    fun doStart(ip: String) {
         this.ip = ip
         messageRequest = MessageRequest(ip,Constants.SERVER_PORT_MESSAGE)
-        messageRequest.start()
         previewRequest = PreviewRequest(ip, Constants.SERVER_PORT_PREVIEW_IMAGE)
+        viewModelScope.launch {
+            messageRequest.start()
+        }
     }
 
     /**

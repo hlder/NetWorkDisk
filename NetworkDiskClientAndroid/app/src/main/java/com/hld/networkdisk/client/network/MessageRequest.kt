@@ -16,6 +16,7 @@ class MessageRequest(private val ip: String, private val port: Int) {
     private val gson = Gson()
 
     suspend fun start() {
+        socketManager.create()
         socketManager.start()
     }
 
@@ -34,7 +35,7 @@ class MessageRequest(private val ip: String, private val port: Int) {
      */
     suspend fun queryFileList(filePath: String): List<FileBean>? {
         try {
-            val jsonStr = doHttp(socketManager, MessageCodes.CODE_FILE_LIST, filePath)
+            val jsonStr = sendMessage(MessageCodes.CODE_FILE_LIST, filePath)
             return gson.fromJson<List<FileBean>>(
                 jsonStr,
                 object : TypeToken<List<FileBean>>() {}.type
@@ -44,13 +45,6 @@ class MessageRequest(private val ip: String, private val port: Int) {
         }
         return null
     }
-
-    private suspend fun doHttp(socketManager: SocketManager, code: Int, filePath: String) =
-        suspendTimeOutCoroutineScope { continuation ->
-            socketManager.sendMessage(code = code, message = filePath) { resultStr ->
-                continuation.resume(resultStr)
-            }
-        }
 
     companion object {
         private const val TAG = "MessageRequest"

@@ -1,13 +1,17 @@
 package com.hld.networkdisk.client.extension
 
 import android.util.Log
+import com.hld.networkdisk.client.network.MessageRequest
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.Timer
+import java.util.TimerTask
 import java.util.concurrent.TimeoutException
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -33,13 +37,18 @@ public suspend inline fun <T> suspendTimeOutCoroutineScope(
     crossinline block: suspend (CancellableContinuation<T>) -> Unit
 ) = coroutineScope {
     val block2: (CancellableContinuation<T>) -> Unit = {
-        launch {
-            delay(timeOut)
-            if (it.isActive) {
-                it.cancel(TimeoutException("time out of ${timeOut}ms"))
+        val timer = Timer()
+        timer.schedule(object : TimerTask() {
+            override fun run() {
+                if (it.isActive) {
+                    it.cancel(TimeoutException("time out of ${timeOut}ms"))
+                }
             }
+        }, timeOut)
+        this.launch {
+            block.invoke(it)
+            timer.cancel()
         }
-        this.launch { block.invoke(it) }
     }
     suspendCancellableCoroutine(block2)
 }

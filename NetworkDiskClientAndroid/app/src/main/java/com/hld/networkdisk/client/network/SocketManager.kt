@@ -2,6 +2,7 @@ package com.hld.networkdisk.client.network
 
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
@@ -14,6 +15,7 @@ import java.io.PrintWriter
 import java.net.Socket
 import java.net.UnknownHostException
 import java.util.concurrent.atomic.AtomicInteger
+
 
 class SocketManager(private val ip: String, private val port: Int) {
     private lateinit var socket: Socket
@@ -28,12 +30,15 @@ class SocketManager(private val ip: String, private val port: Int) {
 
     private val mapCallBack = mutableMapOf<Int, (String) -> Unit>()
 
+    suspend fun create() = withContext(Dispatchers.IO){
+        socket = Socket(ip, port)
+        printWriter = PrintWriter(socket.getOutputStream())
+    }
+
     suspend fun start() {
         mapCallBack.clear()
         withContext(Dispatchers.IO) {
             try {
-                socket = Socket(ip, port)
-                printWriter = PrintWriter(socket.getOutputStream())
                 receiveMessage(socket.getInputStream())
             } catch (e: UnknownHostException) {
                 Log.e(TAG, "startError:${e.localizedMessage}")
@@ -43,6 +48,7 @@ class SocketManager(private val ip: String, private val port: Int) {
         }
         // flow停止了，说明socket断开了
         if (restartCount < maxRestartCount && isNeedRestart) {
+            create()
             start()
             restartCount++
         }
@@ -53,15 +59,20 @@ class SocketManager(private val ip: String, private val port: Int) {
         flow<String> {
             var line = bufferedReader.readLine()
             while (line != null) {
-                Log.d(TAG, "=========收到消息line:$line")
                 emit(line)
-                line = bufferedReader.readLine()
+                line = if (!socket.isClosed) {
+                    bufferedReader.readLine()
+                } else {
+                    null
+                }
             }
         }.flowOn(Dispatchers.IO).collectLatest {
-            Log.d(TAG, "=========collectLatest line:$it")
             // 收到一条消息
             val bean = gson.fromJson(it, BaseMessageBean::class.java)
-            mapCallBack.remove(bean.version)?.invoke(bean.message)
+            Log.d(TAG, "=========collectLatest1 code:${bean.code} version:${bean.version}")
+            mapCallBack.remove(bean.version)?.apply {
+                invoke(bean.message)
+            }
         }
     }
 
@@ -69,6 +80,10 @@ class SocketManager(private val ip: String, private val port: Int) {
     suspend fun sendMessage(code: Int = 0, message: String, callBack: (String) -> Unit) =
         withContext(Dispatchers.IO) {
             val version = messageVersion.getAndIncrement()
+            Log.d(
+                TAG,
+                "=========sendMessage code:${code} version:${version}  callBack：${callBack} "
+            )
             mapCallBack[version] = callBack
             val messageBean = BaseMessageBean(
                 version = version,

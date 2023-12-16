@@ -48,7 +48,7 @@ class ServerActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            FileScan(this@ServerActivity).doScan()
+            FileScan(this@ServerActivity).scanAll()
         }
 
         ServerApi(this, object : ServerSocketManager.OnCreateListener {

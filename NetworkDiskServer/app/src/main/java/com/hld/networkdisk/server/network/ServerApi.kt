@@ -9,8 +9,10 @@ import com.hld.networkdisk.server.beans.MessageTransferFileBean
 import com.hld.networkdisk.server.data.AppDatabase
 import com.hld.networkdisk.server.data.PreviewDao
 import com.hld.networkdisk.server.filemanager.FileManager
+import com.hld.networkdisk.server.filemanager.FileScan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 
 /**
  * 服务端提供接口
@@ -61,7 +63,9 @@ class ServerApi(
                 lifecycleScope.launch(Dispatchers.IO) {
                     val bean = gson.fromJson(fromMessage.message, MessageTransferFileBean::class.java)
                     val outputStream = socketTransfer.getSendFileStream(bean.address, bean.port)
-                    outputStream?.let { fileManager.sendFileWithStream(outputStream, bean) }
+                    outputStream?.let {
+                        val result = fileManager.sendFileWithStream(outputStream, bean)
+                    }
                 }
                 return resultSuccess(fromMessage)
             }
@@ -70,7 +74,12 @@ class ServerApi(
                 lifecycleScope.launch(Dispatchers.IO) {
                     val bean = gson.fromJson(fromMessage.message, MessageTransferFileBean::class.java)
                     val inputStream = socketTransfer.getReceiveFileStream(bean.address, bean.port)
-                    inputStream?.let { fileManager.receiveFileFromStream(inputStream, bean) }
+                    inputStream?.let {
+                        val (result, filePath) = fileManager.receiveFileFromStream(inputStream, bean)
+                        if (result) { // 接收到文件，扫描预览插入数据库
+                            FileScan(activity).scan(File(filePath))
+                        }
+                    }
                 }
                 return resultSuccess(fromMessage)
             }

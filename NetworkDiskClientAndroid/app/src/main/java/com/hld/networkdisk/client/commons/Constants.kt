@@ -1,4 +1,4 @@
-package com.hld.networkdisk.server.commons
+package com.hld.networkdisk.client.commons
 
 import android.content.Context
 

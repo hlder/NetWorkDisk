@@ -41,7 +41,7 @@ class FileManager(context: Context) {
     /**
      * 接收客户端发来的文件
      */
-    fun receiveFileFromStream(inputStream: InputStream, bean: MessageTransferFileBean): Boolean {
+    fun receiveFileFromStream(inputStream: InputStream, bean: MessageTransferFileBean): Pair<Boolean,String> {
         var fileOutputStream: FileOutputStream? = null
         try {
             val outFile = fileReName(baseFilePath + "/" + bean.filePath) // 文件已存在，那么换个名字
@@ -66,7 +66,7 @@ class FileManager(context: Context) {
                 }
             }
             println("=================================receiveFileFromStream 结束")
-            return true
+            return Pair(true, outFile.absolutePath)
         } catch (e: FileNotFoundException) {
             e.printStackTrace()
         } catch (e: IOException) {
@@ -77,7 +77,7 @@ class FileManager(context: Context) {
             inputStream.close()
             fileOutputStream?.close()
         }
-        return false
+        return Pair(false, "")
     }
 
     /**

@@ -17,11 +17,11 @@ class FileScan(private val context: Context) {
     /**
      * 执行扫描
      */
-    suspend fun doScan() = withContext(Dispatchers.IO){
+    suspend fun scanAll() = withContext(Dispatchers.IO){
         scan(File(basePath))
     }
 
-    private fun scan(file: File) {
+    fun scan(file: File) {
         if (file.isDirectory) { // 文件夹
             file.listFiles()?.forEach {
                 scan(it)

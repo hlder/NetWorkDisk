@@ -43,10 +43,8 @@ fun Bitmap.bitmapToBase64(): String? {
 fun String.base64ToBitmap(): Bitmap? {
     try {
         val bytes = Base64.decode(this, Base64.DEFAULT)
-        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        Log.d("dddd", "======this:${this.length}  ====base64ToBitmap:${bitmap}")
-        return bitmap
-    }catch (e:IllegalArgumentException){
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    } catch (e: IllegalArgumentException) {
         Log.e("dddd", "base64ToBitmap err:${e.localizedMessage}")
     }
     return null

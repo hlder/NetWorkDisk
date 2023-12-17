@@ -1,5 +1,8 @@
 package com.hld.networkdisk.client
 
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -10,14 +13,17 @@ import com.hld.networkdisk.client.commons.MessageCodes
 import com.hld.networkdisk.client.network.FileTransferRequest
 import com.hld.networkdisk.client.network.MessageRequest
 import com.hld.networkdisk.client.network.PreviewRequest
+import dagger.hilt.android.internal.Contexts.getApplication
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.lang.Exception
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor() : ViewModel() {
+class MainViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
 
     private lateinit var messageRequest: MessageRequest
     private lateinit var previewRequest: PreviewRequest
@@ -28,7 +34,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
 
     fun doStart(ip: String) {
         this.ip = ip
-        messageRequest = MessageRequest(ip,Constants.SERVER_PORT_MESSAGE)
+        messageRequest = MessageRequest(ip, Constants.SERVER_PORT_MESSAGE)
         previewRequest = PreviewRequest(ip, Constants.SERVER_PORT_PREVIEW_IMAGE)
         viewModelScope.launch {
             messageRequest.start()
@@ -38,7 +44,8 @@ class MainViewModel @Inject constructor() : ViewModel() {
     /**
      * 查询文件列表
      */
-    suspend fun queryFileList(filePath: String): List<FileBean>? = messageRequest.queryFileList(filePath)
+    suspend fun queryFileList(filePath: String): List<FileBean>? =
+        messageRequest.queryFileList(filePath)
 
     /**
      * 查询预览
@@ -53,7 +60,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
         filePath: String,
         onProgress: ((progress: Float) -> Unit)? = null,
         onSuccess: (() -> Unit)? = null,
-    ) {
+    ) = withContext(Dispatchers.IO) {
         val fileTransferRequest = FileTransferRequest.create(ip, portFile)
         val bean = MessageTransferFileBean(
             address = fileTransferRequest.socket.localAddress.hostAddress ?: "",
@@ -62,7 +69,10 @@ class MainViewModel @Inject constructor() : ViewModel() {
             isClientSendToServer = true,
             fileLength = file.length()
         )
-        val resultStr = messageRequest.sendMessage(MessageCodes.CODE_CLIENT_SEND_TO_SERVER_FILE, gson.toJson(bean))
+        val resultStr = messageRequest.sendMessage(
+            MessageCodes.CODE_CLIENT_SEND_TO_SERVER_FILE,
+            gson.toJson(bean)
+        )
         fileTransferRequest.uploadFile(
             file = file,
             onProgress = onProgress,
@@ -79,7 +89,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
         onProgress: ((progress: Float) -> Unit)? = null,
         onSuccess: (() -> Unit)? = null,
         onError: ((Exception) -> Unit)? = null
-    ) {
+    ) = withContext(Dispatchers.IO) {
         val fileTransferRequest = FileTransferRequest.create(ip, portFile)
         val bean = MessageTransferFileBean(
             address = fileTransferRequest.socket.localAddress.hostAddress ?: "",
@@ -88,9 +98,12 @@ class MainViewModel @Inject constructor() : ViewModel() {
             isClientSendToServer = false,
             fileLength = fileSize
         )
-        val resultStr = messageRequest.sendMessage(MessageCodes.CODE_CLIENT_SEND_TO_SERVER_FILE, gson.toJson(bean))
+        val resultStr = messageRequest.sendMessage(
+            MessageCodes.CODE_CLIENT_RECEIVE_FROM_SERVER_FILE,
+            gson.toJson(bean)
+        )
         fileTransferRequest.downLoadFile(
-            filePath = filePath,
+            filePath = Constants.baseFilePath(getApplication()) + filePath,
             fileSize = fileSize,
             onProgress = onProgress,
             onSuccess = onSuccess

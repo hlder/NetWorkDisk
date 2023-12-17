@@ -7,18 +7,18 @@ object FileUtils {
 
     fun getFileSizeStr(fileLength: Long): String {
         val B: Long = fileLength
-        if (B < 1024) {
-            return "\${B}B"
+        if (B < 1024f) {
+            return "${decimalFormat.format(B)}B"
         }
-        val KB = (B / 1024).toFloat()
-        if (KB < 1024) {
+        val KB = B / 1024f
+        if (KB < 1024f) {
             return "${decimalFormat.format(KB)}KB"
         }
-        val MB = KB / 1024
-        if (MB < 1024) {
+        val MB = KB / 1024f
+        if (MB < 1024f) {
             return "${decimalFormat.format(MB)}MB"
         }
-        val GB = MB / 1024
+        val GB = MB / 1024f
         return "${decimalFormat.format(GB)}GB"
     }
 }

@@ -15,7 +15,7 @@ fun Bitmap.bitmapToBase64(): String? {
     var baos: ByteArrayOutputStream? = null
     try {
         baos = ByteArrayOutputStream()
-        this.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+        this.compress(Bitmap.CompressFormat.PNG, 100, baos)
         baos.flush()
         baos.close()
         val bitmapBytes = baos.toByteArray()

@@ -16,6 +16,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.hld.networkdisk.client.MainViewModel
 import com.hld.networkdisk.client.R
 import com.hld.networkdisk.client.beans.FileBean
 import com.hld.networkdisk.client.commons.suffixIsImg
@@ -36,6 +38,8 @@ fun FileListItemPage(
     item: FileBean,
     onClick: () -> Unit
 ) {
+    val downloadStatus = viewModel.getDownloadLiveData(item).observeAsState()
+
     Column(modifier = Modifier.clickable(onClick = onClick)) {
         Row(
             modifier = Modifier
@@ -102,20 +106,25 @@ fun FileListItemPage(
                     Text(text = "$modifiedStr    $fileLength", color = Color.Gray, fontSize = 13.sp)
                 }
             }
-            if(!item.isDirectory){
-                Box(modifier = Modifier.padding(end = 10.dp)) {
-                    val isLocalHave = viewModel.queryIsLocalHave(item)
-                    if (isLocalHave) {// 本地存在，直接打开
-                        Button(onClick = {
+            if (!item.isDirectory) {
+                val status = downloadStatus.value ?: 0f
+                if (status in 0.0..100.0) {//正在下载
+                    Text(text = "${(downloadStatus.value ?: 0f) * 100}%")
+                } else { // 不在下载
+                    Box(modifier = Modifier.padding(end = 10.dp)) {
+                        val isLocalHave = viewModel.queryIsLocalHave(item).collectAsState(initial = false)
+                        if (isLocalHave.value) {// 本地存在，直接打开
+                            Button(onClick = {
 
-                        }) {
-                            Text(text = "打开")
-                        }
-                    } else { // 本地不存在该文件，需要下载
-                        Button(onClick = {
-                            viewModel.downLoad(item)
-                        }) {
-                            Text(text = "下载")
+                            }) {
+                                Text(text = "打开")
+                            }
+                        } else { // 本地不存在该文件，需要下载
+                            Button(onClick = {
+                                viewModel.downLoad(item)
+                            }) {
+                                Text(text = "下载")
+                            }
                         }
                     }
                 }

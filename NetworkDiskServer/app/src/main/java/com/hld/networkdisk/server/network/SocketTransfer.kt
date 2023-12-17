@@ -57,7 +57,7 @@ class SocketTransfer(
             onCreateListener,
             object : ServerSocketManager.OnConnectedListener {
                 override fun onConnected(socket: Socket) {
-                    println("==================================file server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
+                    println("==================================preview server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
                     lifecycleScope.launch(Dispatchers.IO) {
                         receivePreviewImage(
                             socket.getInputStream(),

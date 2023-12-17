@@ -1,22 +1,18 @@
 package com.hld.networkdisk.client.pages.filelistpage
 
 import android.app.Application
-import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.viewModelScope
 import com.hld.networkdisk.client.MainViewModel
+import com.hld.networkdisk.client.MainViewModel.Companion.DOWNLOAD_STATUS_INIT
 import com.hld.networkdisk.client.R
 import com.hld.networkdisk.client.beans.FileBean
 import com.hld.networkdisk.client.commons.Constants
 import com.hld.networkdisk.client.commons.base64ToBitmap
-import com.hld.networkdisk.client.utils.FileUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 
@@ -28,37 +24,23 @@ class FileListViewModel @Inject constructor(
     val filePath: String = savedStateHandle["filePath"] ?: ""
 
     var mainViewModel: MainViewModel? = null
+        set(value) {
+            field = value
+        }
 
     private var listData: List<FileBean>? = null
 
     private val mapPreviewImage = mutableMapOf<String, String>()
 
-    private val mapChildFile = mutableMapOf<String, File>()
-
-    init {
-        initMap()
-    }
-
-    private fun initMap() {
-        val baseFilePath = Constants.baseFilePath(getApplication())
-        val path = "${baseFilePath}/${filePath}"
-        val file = File(path)
-        if (file.exists()) {
-            file.listFiles()?.forEach { item ->
-                val key = item.absolutePath.replace(baseFilePath, "")
-                mapChildFile[key] = item
-            }
-        }
-    }
+    private val mapDownLoadLiveData = mutableMapOf<String, MutableLiveData<Float>>()
 
     /**
      * 查询是否本地有该文件
      */
-    fun queryIsLocalHave(fileBean: FileBean): Boolean {
-        val localFile = mapChildFile[fileBean.absolutePath]
-        return if (localFile == null) {
-            false
-        } else localFile.length() == fileBean.fileLength
+    fun queryIsLocalHave(fileBean: FileBean) = flow {
+        val baseFilePath = Constants.baseFilePath(getApplication())
+        val file = File(baseFilePath + fileBean.absolutePath)
+        emit(file.exists() && file.length() == fileBean.fileLength)
     }
 
     /**
@@ -125,25 +107,36 @@ class FileListViewModel @Inject constructor(
         }
     }
 
-    fun downLoad(fileBean: FileBean) {
-        viewModelScope.launch {
-            mainViewModel?.downLoadFile(
-                fileBean.absolutePath,
-                fileBean.fileLength,
-                onProgress = {
-                    Log.d(TAG, "=========onDownLoadProgress:${fileBean.absolutePath}   progress:$it")
-                },
-                onSuccess = {
-                    Log.d(TAG, "=========下载成功:${fileBean.absolutePath}")
-                },
-                onError = {
-                    Log.d(TAG, "=========下载错误${fileBean.absolutePath}")
-                }
-            )
+    /**
+     * 获取下载状态的liveData
+     */
+    fun getDownloadLiveData(fileBean: FileBean): MutableLiveData<Float> {
+        val filePath = fileBean.absolutePath
+        var ld = mapDownLoadLiveData[filePath]
+        if (ld == null) {
+            ld = mainViewModel?.mapDownloadLiveData?.get(filePath)
         }
+        if (ld == null) {
+            ld = MutableLiveData(DOWNLOAD_STATUS_INIT)
+        }
+        mapDownLoadLiveData[filePath] = ld
+        return ld
+    }
+
+    /**
+     * 执行下载动作
+     */
+    fun downLoad(fileBean: FileBean) {
+        val liveData = getDownloadLiveData(fileBean)
+        mainViewModel?.downLoadFile(
+            fileBean.absolutePath,
+            fileBean.fileLength,
+            liveData
+        )
     }
 
     companion object {
         private const val TAG = "FileListViewModel"
+
     }
 }

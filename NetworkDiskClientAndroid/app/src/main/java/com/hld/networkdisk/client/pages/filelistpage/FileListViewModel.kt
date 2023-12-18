@@ -1,7 +1,10 @@
 package com.hld.networkdisk.client.pages.filelistpage
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
@@ -12,7 +15,10 @@ import com.hld.networkdisk.client.beans.FileBean
 import com.hld.networkdisk.client.commons.Constants
 import com.hld.networkdisk.client.commons.base64ToBitmap
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 
@@ -41,7 +47,7 @@ class FileListViewModel @Inject constructor(
         val baseFilePath = Constants.baseFilePath(getApplication())
         val file = File(baseFilePath + fileBean.absolutePath)
         emit(file.exists() && file.length() == fileBean.fileLength)
-    }
+    }.flowOn(Dispatchers.IO)
 
     /**
      * 获取当前文件夹的名字
@@ -62,34 +68,15 @@ class FileListViewModel @Inject constructor(
      * 查询文件的预览图片
      */
     fun queryPreviewImage(filePath: String) = flow {
+        val base64: String?
         if (mapPreviewImage.contains(filePath)) {
-            emit(mapPreviewImage[filePath]!!)
+            base64 = mapPreviewImage[filePath]
         } else {
-            Log.d(TAG, "===============queryPreviewImage1  filePath:${filePath}")
-            val imgBase64 = mainViewModel?.queryPreview(filePath)
-            imgBase64?.let {
-                if (imgBase64.length > 101) {
-                    Log.d(TAG, "===============start${imgBase64.substring(0, 100)}")
-                    Log.d(
-                        TAG, "filePath:${filePath}===============end${
-                            imgBase64.substring(
-                                imgBase64.length - 100, imgBase64.length - 1
-                            )
-                        }"
-                    )
-                }
-                mapPreviewImage[filePath] = imgBase64
-                emit(imgBase64)
-            }
+            base64 = mainViewModel?.queryPreview(filePath)
+            base64?.let { mapPreviewImage[filePath] = base64 }
         }
-    }
-
-    /**
-     * base64转bitmap
-     */
-    fun base64ToBitmap(base64: String) = flow {
-        emit(base64.base64ToBitmap())
-    }
+        emit(base64)
+    }.flowOn(Dispatchers.IO)
 
     /**
      * 查询列表
@@ -105,7 +92,7 @@ class FileListViewModel @Inject constructor(
                 emit(list)
             }
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
     /**
      * 获取下载状态的liveData

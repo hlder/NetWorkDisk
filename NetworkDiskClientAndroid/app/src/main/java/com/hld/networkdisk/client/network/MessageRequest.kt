@@ -23,7 +23,7 @@ class MessageRequest(private val ip: String, private val port: Int) {
     /**
      * 普通发送消息
      */
-    suspend fun sendMessage(code: Int, message: String) =
+    private suspend fun sendMessage(code: Int, message: String) =
         suspendTimeOutCoroutineScope { continuation ->
             socketManager.sendMessage(code, message) { resultStr -> // 超时10秒
                 continuation.resume(resultStr)
@@ -35,7 +35,9 @@ class MessageRequest(private val ip: String, private val port: Int) {
      */
     suspend fun queryFileList(filePath: String): List<FileBean>? {
         try {
+            Log.i(TAG, "queryFileList filePath:${filePath}")
             val jsonStr = sendMessage(MessageCodes.CODE_FILE_LIST, filePath)
+            Log.i(TAG, "queryFileList return:${jsonStr.length}")
             return gson.fromJson<List<FileBean>>(
                 jsonStr,
                 object : TypeToken<List<FileBean>>() {}.type

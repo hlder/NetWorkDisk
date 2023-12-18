@@ -1,5 +1,6 @@
 package com.hld.networkdisk.server.network
 
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
@@ -28,17 +29,16 @@ class ServerApi(
     private val socketTransfer =
         SocketTransfer(activity, onCreateListener, object : SocketTransfer.OnRequestListener {
             override suspend fun onRequest(data: String): String {
-                println("=========================server收到消息：$data")
+                Log.i(TAG, "server收到消息：$data")
                 val messageBean = gson.fromJson(data, MessageBean::class.java)
                 return parseMessage(messageBean).apply {
-                    println("=========================返回数据：$this")
+                    Log.i(TAG, "返回数据：$data")
                 }
             }
         }, object : SocketTransfer.OnRequestListener {
             override suspend fun onRequest(data: String): String {
                 val messageBean = gson.fromJson(data, MessageBean::class.java)
                 val path = messageBean.message
-                println("=========================preViewImage收到消息：$path")
                 val previewBean = AppDatabase.getInstance(activity).previewDao().query(path)
                 return resultSuccess(messageBean, previewBean?.previewImageBase64?:"")
             }
@@ -58,31 +58,6 @@ class ServerApi(
                 }
                 return resultSuccess(fromMessage, listFileBean)
             }
-
-            MessageCodes.CODE_CLIENT_RECEIVE_FROM_SERVER_FILE -> { // 客户端收服务端的文件
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val bean = gson.fromJson(fromMessage.message, MessageTransferFileBean::class.java)
-                    val outputStream = socketTransfer.getSendFileStream(bean.address, bean.port)
-                    outputStream?.let {
-                        val result = fileManager.sendFileWithStream(outputStream, bean)
-                    }
-                }
-                return resultSuccess(fromMessage)
-            }
-
-            MessageCodes.CODE_CLIENT_SEND_TO_SERVER_FILE -> { // 客户端发文件给服务端
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val bean = gson.fromJson(fromMessage.message, MessageTransferFileBean::class.java)
-                    val inputStream = socketTransfer.getReceiveFileStream(bean.address, bean.port)
-                    inputStream?.let {
-                        val (result, filePath) = fileManager.receiveFileFromStream(inputStream, bean)
-                        if (result) { // 接收到文件，扫描预览插入数据库
-                            FileScan(activity).scan(File(filePath))
-                        }
-                    }
-                }
-                return resultSuccess(fromMessage)
-            }
         }
         return ""
     }
@@ -98,5 +73,9 @@ class ServerApi(
                 message = obj?.let { gson.toJson(it) } ?: ""
             )
         )
+    }
+
+    companion object{
+        private const val TAG = "ServerApi"
     }
 }

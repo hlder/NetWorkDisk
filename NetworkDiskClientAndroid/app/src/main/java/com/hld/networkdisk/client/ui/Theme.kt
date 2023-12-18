@@ -100,7 +100,6 @@ private val DarkColors = darkColorScheme(
 @Composable
 fun ComposeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -117,11 +116,9 @@ fun ComposeTheme(
     if (!view.isInEditMode) {
         val systemUiController = rememberSystemUiController()
         val useDarkIcons = !isSystemInDarkTheme()
-        val window = (view.context as Activity).window
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+//        val window = (view.context as Activity).window
+//        WindowCompat.setDecorFitsSystemWindows(window, false)
         DisposableEffect(systemUiController, useDarkIcons) {
-            // Update all of the system bar colors to be transparent, and use
-            // dark icons if we're in light theme
             systemUiController.setSystemBarsColor(
                 color = Color.Transparent,
                 darkIcons = useDarkIcons

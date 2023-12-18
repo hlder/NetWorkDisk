@@ -3,6 +3,7 @@ package com.hld.networkdisk.server
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -19,7 +20,9 @@ import com.hld.networkdisk.server.network.ServerApi
 import com.hld.networkdisk.server.network.ServerSocketManager
 import com.hld.networkdisk.server.network.SocketType
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 @AndroidEntryPoint
@@ -44,7 +47,14 @@ class ServerActivity : ComponentActivity() {
             val textFile = remember {
                 portFileState
             }
-            Test("${text.value}","${textFile.value}") { click() }
+            Test("${text.value}","${textFile.value}",
+                onClick = { click() }, onClick2 = {
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        withContext(Dispatchers.Main){
+                            Toast.makeText(this@ServerActivity, "test show toast", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                })
         }
 
         lifecycleScope.launch {
@@ -113,13 +123,16 @@ class ServerActivity : ComponentActivity() {
 }
 
 @Composable
-fun Test(textStr:String,textFileStr:String, onClick: () -> Unit) {
+fun Test(textStr:String,textFileStr:String, onClick: () -> Unit, onClick2: () -> Unit) {
     Column {
         Text(text = "消息端口:${textStr}")
         Text(text = "文件端口:${textFileStr}")
         Text(text = "预览图端口:${Constants.SERVER_PORT_PREVIEW_IMAGE}")
         Button(onClick = onClick) {
             Text(text = "点击")
+        }
+        Button(onClick = onClick2) {
+            Text(text = "点击2")
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.hld.networkdisk.client.pages.filelistpage
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -14,85 +13,44 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.hld.networkdisk.client.MainViewModel
 import com.hld.networkdisk.client.R
 import com.hld.networkdisk.client.beans.FileBean
+import com.hld.networkdisk.client.commons.Constants
+import com.hld.networkdisk.client.commons.base64ToBitmap
 import com.hld.networkdisk.client.commons.suffixIsImg
 import com.hld.networkdisk.client.utils.DateFormatUtil
 import com.hld.networkdisk.client.utils.FileUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun FileListItemPage(
-    viewModel: FileListViewModel = hiltViewModel(),
     item: FileBean,
     onClick: () -> Unit
 ) {
-    val downloadStatus = viewModel.getDownloadLiveData(item).observeAsState()
-
+    println("--------------------------------------------------刷新FileListItemPage")
     Column(modifier = Modifier.clickable(onClick = onClick)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp)
         ) {
-            var bitmapState: State<Bitmap?>? = null
-            val imgBase64 =
-                viewModel.queryPreviewImage(item.absolutePath).collectAsState(initial = "")
-
-            if (item.suffix.suffixIsImg() && imgBase64.value.isNotEmpty()) { // 需要去网络获取图片
-                bitmapState =
-                    viewModel.base64ToBitmap(imgBase64.value).collectAsState(initial = null)
-            }
-            Box(
-                modifier = Modifier
-                    .width(50.dp)
-                    .height(50.dp)
-            ) {
-                bitmapState.let {
-                    val bitmap = it?.value
-                    if (bitmap == null) {
-                        val imagePainter = if (item.isDirectory) {
-                            painterResource(id = R.mipmap.icon_folder)
-                        } else {
-                            painterResource(id = R.mipmap.icon_file_unknown)
-                        }
-                        Image(
-                            painter = imagePainter, contentDescription = "", modifier = Modifier
-                                .width(50.dp)
-                                .height(50.dp)
-                        )
-                    } else {
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "",
-                            modifier = Modifier
-                                .width(50.dp)
-                                .height(50.dp)
-                        )
-                    }
-                }
-                if (!item.isDirectory) {
-                    Image(
-                        painter = painterResource(id = R.mipmap.icon_file_right_yun),
-                        contentDescription = "icon_right",
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .width(20.dp)
-                            .height(20.dp)
-                    )
-                }
-            }
+            PreviewImage(item = item)
             Column(
                 modifier = Modifier
                     .padding(start = 10.dp)
@@ -106,29 +64,91 @@ fun FileListItemPage(
                     Text(text = "$modifiedStr    $fileLength", color = Color.Gray, fontSize = 13.sp)
                 }
             }
-            if (!item.isDirectory) {
-                val status = downloadStatus.value ?: 0f
-                if (status in 0.0..100.0) {//正在下载
-                    Text(text = "${(downloadStatus.value ?: 0f) * 100}%")
-                } else { // 不在下载
-                    Box(modifier = Modifier.padding(end = 10.dp)) {
-                        val isLocalHave = viewModel.queryIsLocalHave(item).collectAsState(initial = false)
-                        if (isLocalHave.value) {// 本地存在，直接打开
-                            Button(onClick = {
+            ItemRightButton(item = item)
+        }
+    }
+}
 
-                            }) {
-                                Text(text = "打开")
-                            }
-                        } else { // 本地不存在该文件，需要下载
-                            Button(onClick = {
-                                viewModel.downLoad(item)
-                            }) {
-                                Text(text = "下载")
-                            }
-                        }
+@Composable
+fun ItemRightButton(viewModel: FileListViewModel = hiltViewModel(), item: FileBean) {
+    println("--------------------------------------------------刷新ItemRightButton")
+    if (!item.isDirectory) {
+        val downloadStatus = viewModel.getDownloadLiveData(item).observeAsState()
+        val status = downloadStatus.value ?: 0f
+        if (status in 0.0..100.0) {//正在下载
+            Text(text = "${status * 100}%")
+        } else { // 不在下载
+            Box(modifier = Modifier.padding(end = 10.dp)) {
+                val context = LocalContext.current
+                val isLocalHave =
+                    viewModel.queryIsLocalHave(item).collectAsState(initial = false)
+                if (isLocalHave.value) {// 本地存在，直接打开
+                    Button(onClick = {
+                        FileUtils.openFile(context, Constants.baseFilePath(context) + item.absolutePath)
+                    }) {
+                        Text(text = "打开")
+                    }
+                } else { // 本地不存在该文件，需要下载
+                    Button(onClick = {
+                        viewModel.downLoad(item)
+                    }) {
+                        Text(text = "下载")
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun PreviewImage(viewModel: FileListViewModel = hiltViewModel(), item: FileBean) {
+    println("--------------------------------------------------刷新PreviewImage")
+    Box(
+        modifier = Modifier
+            .width(50.dp)
+            .height(50.dp)
+    ) {
+        val defImagePainter = if (item.isDirectory) {
+            painterResource(id = R.mipmap.icon_folder)
+        } else {
+            painterResource(id = R.mipmap.icon_file_unknown)
+        }
+        if (item.suffix.suffixIsImg()) { // 判断是否是image类型
+            val base64State = viewModel.queryPreviewImage(item.absolutePath)
+                .collectAsState(initial = null).value
+            val imageBitmap = base64State?.base64ToBitmap()?.asImageBitmap()
+            if (imageBitmap != null) {
+                Image(
+                    bitmap = imageBitmap,
+                    contentDescription = "",
+                    modifier = Modifier
+                        .width(50.dp)
+                        .height(50.dp)
+                )
+            } else {
+                Image(
+                    painter = defImagePainter, contentDescription = "", modifier = Modifier
+                        .width(50.dp)
+                        .height(50.dp)
+                )
+            }
+        } else {
+            Image(
+                painter = defImagePainter, contentDescription = "", modifier = Modifier
+                    .width(50.dp)
+                    .height(50.dp)
+            )
+        }
+
+        if (!item.isDirectory) {
+            Image(
+                painter = painterResource(id = R.mipmap.icon_file_right_yun),
+                contentDescription = "icon_right",
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .width(20.dp)
+                    .height(20.dp)
+            )
         }
     }
 }

@@ -82,7 +82,7 @@ class SocketManager(private val ip: String, private val port: Int) {
             val version = messageVersion.getAndIncrement()
             Log.d(
                 TAG,
-                "=========sendMessage code:${code} version:${version}  callBack：${callBack} "
+                "=========sendMessage code:${code} version:${version}  port:${socket.localPort}  callBack：${callBack}"
             )
             mapCallBack[version] = callBack
             val messageBean = BaseMessageBean(
@@ -93,6 +93,10 @@ class SocketManager(private val ip: String, private val port: Int) {
 
             printWriter.println(gson.toJson(messageBean))
             printWriter.flush()
+            Log.d(
+                TAG,
+                "=========sendMessage flush"
+            )
         }
 
     fun close() {

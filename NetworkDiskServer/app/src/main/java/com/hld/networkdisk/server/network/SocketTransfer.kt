@@ -1,8 +1,8 @@
 package com.hld.networkdisk.server.network
 
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
-import com.hld.networkdisk.server.commons.Constants.SERVER_PORT_FILE
 import com.hld.networkdisk.server.commons.Constants.SERVER_PORT_MESSAGE
 import com.hld.networkdisk.server.commons.Constants.SERVER_PORT_PREVIEW_IMAGE
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,6 @@ class SocketTransfer(
     private val onPreviewImageRequestListener: OnRequestListener,
 ) {
     private val lifecycleScope = activity.lifecycleScope
-    private val mapClient = mutableMapOf<String, Socket>()
 
     init {
         val messageServerSocketManager = ServerSocketManager( // 用于发送问你消息。
@@ -35,29 +34,20 @@ class SocketTransfer(
             onCreateListener,
             object : ServerSocketManager.OnConnectedListener {
                 override fun onConnected(socket: Socket) {
-                    println("==================================message server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
+                    Log.i(TAG , "message server收到连接inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}")
                     lifecycleScope.launch(Dispatchers.IO) {
                         receiveMessage(socket.getInputStream(), socket.getOutputStream()) // 接收消息和发送
+                        Log.i(TAG , "链接断开message server inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}")
                     }
                 }
             }, SocketType.MESSAGE
-        )
-        val fileServerSocketManager = ServerSocketManager( // 用于传输文件
-            activity, SERVER_PORT_FILE,
-            onCreateListener,
-            object : ServerSocketManager.OnConnectedListener {
-                override fun onConnected(socket: Socket) {
-                    println("==================================file server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
-                    mapClient["${socket.inetAddress.hostAddress}:${socket.port}"] = socket
-                }
-            }, SocketType.FILE
         )
         val previewImageSocketManager = ServerSocketManager( // 用于获取预览图
             activity, SERVER_PORT_PREVIEW_IMAGE,
             onCreateListener,
             object : ServerSocketManager.OnConnectedListener {
                 override fun onConnected(socket: Socket) {
-                    println("==================================preview server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
+//                    Log.i(TAG , "preview server收到连接localAddress:${socket.localAddress.hostName}  inetAddress:${socket.inetAddress.hostAddress}  port:${socket.port}  localPort:${socket.localPort}")
                     lifecycleScope.launch(Dispatchers.IO) {
                         receivePreviewImage(
                             socket.getInputStream(),
@@ -67,20 +57,7 @@ class SocketTransfer(
                 }
             }, SocketType.PREVIEW
         )
-    }
-
-    /**
-     * 收文件
-     */
-    fun getReceiveFileStream(address: String, port: Int): InputStream? {
-        return mapClient["${address}:$port"]?.getInputStream()
-    }
-
-    /**
-     * 发送文件
-     */
-    fun getSendFileStream(address: String, port: Int): OutputStream? {
-        return mapClient["${address}:$port"]?.getOutputStream()
+        FileTransfer(activity, onCreateListener)
     }
 
     /**
@@ -92,9 +69,11 @@ class SocketTransfer(
         flow<String> {
             var line = bufferedReader.readLine()
             while (line != null) {
+                Log.i(TAG , "收到消息 line:${line}")
                 emit(line)
                 line = bufferedReader.readLine()
             }
+            Log.i(TAG , "结束接收消息")
         }.flowOn(Dispatchers.IO).collectLatest {
             // 收到一条消息
             val message = onMessageRequestListener.onRequest(it)
@@ -128,5 +107,9 @@ class SocketTransfer(
      */
     interface OnRequestListener {
         suspend fun onRequest(data: String): String
+    }
+
+    companion object{
+        private const val TAG = "SocketTransfer"
     }
 }

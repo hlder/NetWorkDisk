@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
 import android.provider.MediaStore
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -62,12 +63,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
         init()
+        bindServer()
+    }
+
+    private val onUploadListener = object :OnUploadListener.Stub(){
+        override fun onProgress(filePath: String?, fileLength: Long, nowLength: Long) {
+            Log.d(TAG, "=============onProgress:fileLength:${fileLength}   nowLength:${nowLength}")
+        }
     }
 
     private fun bindServer() {
         val intent = Intent(this@MainActivity, UploadFileServer::class.java)
         bindService(intent, object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                val stub = UploadFileInterface.Stub.asInterface(service)
+                stub.setListener(onUploadListener)
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {

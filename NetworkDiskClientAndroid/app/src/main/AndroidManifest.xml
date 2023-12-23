@@ -42,7 +42,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".servers.UploadFileServer"/>
+        <service android:name=".servers.UploadFileServer" android:process=":uploadFileServer"/>
     </application>
 
 </manifest>

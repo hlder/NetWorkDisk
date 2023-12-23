@@ -9,6 +9,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.hld.networkdisk.client.OnUploadListener
 import com.hld.networkdisk.client.R
 import com.hld.networkdisk.client.UploadFileInterface
 import com.hld.networkdisk.client.commons.Constants.SERVER_PORT_FILE
@@ -24,9 +25,15 @@ class UploadFileServer : LifecycleService() {
 
     private val listFlow = mutableListOf<StateFlow<Float>>()
 
+    private var onUploadListener: OnUploadListener? = null
+
     override fun onBind(intent: Intent): IBinder? {
         super.onBind(intent)
-        return UploadFileInterface.Default().asBinder()
+        return object : UploadFileInterface.Stub() {
+            override fun setListener(onUploadListener: OnUploadListener?) {
+                this@UploadFileServer.onUploadListener = onUploadListener
+            }
+        }.asBinder()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -48,10 +55,11 @@ class UploadFileServer : LifecycleService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-    private fun showNotify(){
+    private fun showNotify() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT)
+            val channel =
+                NotificationChannel(CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT)
             channel.description = "description"
             // 你可以在这里设置更多的通知频道属性，如声音、振动等。
             val notificationManager = getSystemService(
@@ -86,11 +94,12 @@ class UploadFileServer : LifecycleService() {
                 yunFilePath = filePath,
                 onProgress = {
                     stateFlow.emit(it)
+                    onUploadListener?.onProgress("aaa",1,200)
                 },
                 onSuccess = {
                     stateFlow.emit(200f)
                     listFlow.remove(stateFlow)
-                    if(listFlow.size == 0){
+                    if (listFlow.size == 0) {
                         stopForeground(STOP_FOREGROUND_REMOVE)
                     }
                 })
@@ -102,6 +111,5 @@ class UploadFileServer : LifecycleService() {
         private const val CHANNEL_ID = "UploadFileServerChannelId"
 
         private const val FOREGROUND_ID = 10808
-
     }
 }

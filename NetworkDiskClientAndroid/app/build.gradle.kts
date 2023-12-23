@@ -151,6 +151,7 @@ dependencies {
   implementation(libs.androidx.compose.material3)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.glide)
+  implementation("com.github.gzu-liyujiang.AndroidPicker:FilePicker:4.1.13")
   debugImplementation(libs.androidx.compose.ui.tooling)
 
   // Testing dependencies

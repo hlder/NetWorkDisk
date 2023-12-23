@@ -2,12 +2,11 @@ package com.hld.networkdisk.client.pages.filelistpage
 
 import android.app.Application
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Log
-import androidx.compose.ui.graphics.asImageBitmap
+import android.util.LruCache
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
+import com.bumptech.glide.disklrucache.DiskLruCache
 import com.hld.networkdisk.client.MainViewModel
 import com.hld.networkdisk.client.MainViewModel.Companion.DOWNLOAD_STATUS_INIT
 import com.hld.networkdisk.client.R
@@ -39,6 +38,23 @@ class FileListViewModel @Inject constructor(
     private val mapPreviewImage = mutableMapOf<String, String>()
 
     private val mapDownLoadLiveData = mutableMapOf<String, MutableLiveData<Float>>()
+
+    private val lruCache = object : LruCache<String, Bitmap>(200 * 1024 * 1024) {
+        override fun sizeOf(key: String?, value: Bitmap?): Int {
+            return value?.byteCount ?: 0
+        }
+    }
+
+    fun getBitmapFromCache(base64Image: String): Bitmap? {
+        var cacheBitmap = lruCache.get(base64Image)
+        if (cacheBitmap == null) {
+            cacheBitmap = base64Image.base64ToBitmap()
+            cacheBitmap?.let{
+                lruCache.put(base64Image, cacheBitmap)
+            }
+        }
+        return cacheBitmap
+    }
 
     /**
      * 查询是否本地有该文件
@@ -88,9 +104,7 @@ class FileListViewModel @Inject constructor(
         } else {
             list = mainViewModel?.queryFileList("/$filePath")
             listData = list
-            list?.let {
-                emit(list)
-            }
+            emit(list)
         }
     }.flowOn(Dispatchers.IO)
 

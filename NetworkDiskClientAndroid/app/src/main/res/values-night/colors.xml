@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="action_top_bar_bg_color">#000000</color>
+    <color name="action_top_bar_text_color">#ffffff</color>
+    <color name="divider_color">#c2c2c2</color>
+    <color name="text_title_name">#ffffff</color>
+</resources>

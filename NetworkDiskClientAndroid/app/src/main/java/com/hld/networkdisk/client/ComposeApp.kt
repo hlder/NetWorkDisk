@@ -30,9 +30,14 @@ fun SunFlowerNavHost(
             HomePage { navController.navigate(Routers.FILE_LIST) }
         }
         composable(route = Routers.FILE_LIST) {
-            FileListPage { path ->
-                navController.navigate("${Routers.FILE_LIST}?filePath=$path")
-            }
+            FileListPage(
+                onNavigateToFileList = { path ->
+                    navController.navigate("${Routers.FILE_LIST}?filePath=$path")
+                },
+                onBackClick = {
+                    navController.navigateUp()
+                }
+            )
         }
         composable(
             route = "${Routers.FILE_LIST}?filePath={filePath}",
@@ -40,9 +45,14 @@ fun SunFlowerNavHost(
                 type = NavType.StringType
             })
         ) {
-            FileListPage { path ->
-                navController.navigate("${Routers.FILE_LIST}?filePath=$path")
-            }
+            FileListPage(
+                onNavigateToFileList = { path ->
+                    navController.navigate("${Routers.FILE_LIST}?filePath=$path")
+                },
+                onBackClick = {
+                    navController.navigateUp()
+                }
+            )
         }
     }
 }

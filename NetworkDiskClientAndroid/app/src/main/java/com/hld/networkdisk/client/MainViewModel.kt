@@ -14,18 +14,21 @@ import com.hld.networkdisk.client.network.PreviewRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
 
+    val mapDownloadLiveData = mutableMapOf<String, MutableLiveData<Float>>()
+
+    val startFileSelect = MutableLiveData(false)
+
+    var selectedYunFilePath: String = ""
+
     private lateinit var messageRequest: MessageRequest
     private lateinit var previewRequest: PreviewRequest
-    private var ip: String = ""
+    var ip: String = ""
     private var portFile: Int = Constants.SERVER_PORT_FILE
-
-    val mapDownloadLiveData = mutableMapOf<String, MutableLiveData<Float>>()
 
     fun doStart(ip: String) {
         this.ip = ip
@@ -34,6 +37,14 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         viewModelScope.launch {
             messageRequest.start()
         }
+    }
+
+    /**
+     * 启动文件选择
+     */
+    fun startFileSelect(yunFilePath: String) {
+        selectedYunFilePath = yunFilePath
+        startFileSelect.postValue(true)
     }
 
     /**
@@ -46,16 +57,6 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
      * 查询预览
      */
     suspend fun queryPreview(filePath: String) = previewRequest.queryPreviewImage(filePath)
-
-    /**
-     * 上传文件
-     */
-    suspend fun uploadFile(
-        file: File,
-        filePath: String,
-        onProgress: ((progress: Float) -> Unit)? = null,
-        onSuccess: (() -> Unit)? = null,
-    ) = FileTransferRequest.create(ip, portFile).doSendFile(file, filePath, onProgress, onSuccess)
 
     /**
      * 下载文件

@@ -1,6 +1,7 @@
 package com.hld.networkdisk.server.filemanager
 
 import android.content.Context
+import android.util.Log
 import com.hld.networkdisk.server.beans.FileBean
 import com.hld.networkdisk.server.beans.MessageTransferFileBean
 import com.hld.networkdisk.server.commons.Constants
@@ -44,14 +45,15 @@ class FileManager(context: Context) {
     fun receiveFileFromStream(inputStream: InputStream, bean: MessageTransferFileBean): Pair<Boolean,String> {
         var fileOutputStream: FileOutputStream? = null
         try {
+            Log.i(TAG, "=================================receiveFileFromStream :${baseFilePath + "/" + bean.filePath}")
             val outFile = fileReName(baseFilePath + "/" + bean.filePath) // 文件已存在，那么换个名字
             if(outFile.parentFile?.exists() != true){
                 outFile.parentFile?.mkdirs()
             }
+            Log.i(TAG, "=================================receiveFileFromStream outFile:${outFile.absolutePath}")
             outFile.createNewFile()
-            println("=================================receiveFileFromStream outFile:${outFile.absolutePath}")
             fileOutputStream = FileOutputStream(outFile)
-            println("=================================receiveFileFromStream 开始")
+            Log.i(TAG, "=================================receiveFileFromStream 开始")
 
             val buffer = ByteArray(1024)
             var length: Int
@@ -62,10 +64,10 @@ class FileManager(context: Context) {
                     sb.append("[")
                     buffer.forEach { sb.append("${it},") }
                     sb.append("]")
-                    println("=================================receiveFileFromStream bytesRead:${length} buffer:${sb.toString()}")
+                    Log.i(TAG, "=================================receiveFileFromStream bytesRead:${length} buffer:${sb.toString()}")
                 }
             }
-            println("=================================receiveFileFromStream 结束")
+            Log.i(TAG, "=================================receiveFileFromStream 结束")
             return Pair(true, outFile.absolutePath)
         } catch (e: FileNotFoundException) {
             e.printStackTrace()
@@ -119,5 +121,9 @@ class FileManager(context: Context) {
             return fileReName(newFilePath)
         }
         return file
+    }
+
+    companion object{
+        private const val TAG = "FileManager"
     }
 }

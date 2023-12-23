@@ -15,12 +15,10 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -34,16 +32,13 @@ import com.hld.networkdisk.client.commons.base64ToBitmap
 import com.hld.networkdisk.client.commons.suffixIsImg
 import com.hld.networkdisk.client.utils.DateFormatUtil
 import com.hld.networkdisk.client.utils.FileUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.hld.networkdisk.client.widgets.ColorWidget
 
 @Composable
 fun FileListItemPage(
     item: FileBean,
     onClick: () -> Unit
 ) {
-    println("--------------------------------------------------刷新FileListItemPage")
     Column(modifier = Modifier.clickable(onClick = onClick)) {
         Row(
             modifier = Modifier
@@ -51,27 +46,35 @@ fun FileListItemPage(
                 .padding(10.dp)
         ) {
             PreviewImage(item = item)
-            Column(
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .weight(1f)
-            ) {
-                Text(text = item.name, color = Color(0xff070a1b), fontSize = 16.sp)
-                Spacer(modifier = Modifier.height(5.dp))
-                if (!item.isDirectory) {
-                    val modifiedStr = DateFormatUtil.formatTimeStamp(item.lastModified)
-                    val fileLength = FileUtils.getFileSizeStr(item.fileLength)
-                    Text(text = "$modifiedStr    $fileLength", color = Color.Gray, fontSize = 13.sp)
-                }
-            }
+            ItemCenter(modifier = Modifier.weight(1f), item)
             ItemRightButton(item = item)
         }
     }
 }
 
 @Composable
+fun ItemCenter(modifier: Modifier, item: FileBean){
+    Column(
+        modifier = Modifier
+            .then(modifier)
+            .padding(start = 10.dp)
+    ) {
+        Text(
+            text = item.name,
+            color = ColorWidget(R.color.text_title_name),
+            fontSize = 16.sp
+        )
+        Spacer(modifier = Modifier.height(5.dp))
+        if (!item.isDirectory) {
+            val modifiedStr = DateFormatUtil.formatTimeStamp(item.lastModified)
+            val fileLength = FileUtils.getFileSizeStr(item.fileLength)
+            Text(text = "$modifiedStr    $fileLength", color = Color.Gray, fontSize = 13.sp)
+        }
+    }
+}
+
+@Composable
 fun ItemRightButton(viewModel: FileListViewModel = hiltViewModel(), item: FileBean) {
-    println("--------------------------------------------------刷新ItemRightButton")
     if (!item.isDirectory) {
         val downloadStatus = viewModel.getDownloadLiveData(item).observeAsState()
         val status = downloadStatus.value ?: 0f
@@ -84,7 +87,10 @@ fun ItemRightButton(viewModel: FileListViewModel = hiltViewModel(), item: FileBe
                     viewModel.queryIsLocalHave(item).collectAsState(initial = false)
                 if (isLocalHave.value) {// 本地存在，直接打开
                     Button(onClick = {
-                        FileUtils.openFile(context, Constants.baseFilePath(context) + item.absolutePath)
+                        FileUtils.openFile(
+                            context,
+                            Constants.baseFilePath(context) + item.absolutePath
+                        )
                     }) {
                         Text(text = "打开")
                     }
@@ -102,7 +108,6 @@ fun ItemRightButton(viewModel: FileListViewModel = hiltViewModel(), item: FileBe
 
 @Composable
 fun PreviewImage(viewModel: FileListViewModel = hiltViewModel(), item: FileBean) {
-    println("--------------------------------------------------刷新PreviewImage")
     Box(
         modifier = Modifier
             .width(50.dp)
@@ -116,7 +121,7 @@ fun PreviewImage(viewModel: FileListViewModel = hiltViewModel(), item: FileBean)
         if (item.suffix.suffixIsImg()) { // 判断是否是image类型
             val base64State = viewModel.queryPreviewImage(item.absolutePath)
                 .collectAsState(initial = null).value
-            val imageBitmap = base64State?.base64ToBitmap()?.asImageBitmap()
+            val imageBitmap = base64State?.run { viewModel.getBitmapFromCache(this) }?.asImageBitmap()
             if (imageBitmap != null) {
                 Image(
                     bitmap = imageBitmap,

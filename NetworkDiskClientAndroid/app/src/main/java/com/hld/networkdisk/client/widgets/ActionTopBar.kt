@@ -15,7 +15,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -32,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hld.networkdisk.client.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionTopBar(
     title: String,
@@ -39,7 +42,7 @@ fun ActionTopBar(
     menuContent: (@Composable ColumnScope.(MutableState<Boolean>) -> Unit)? = null
 ) {
     val expandedState = remember { mutableStateOf(false) }
-    TopAppBar(
+    CenterAlignedTopAppBar(
         title = {
             Text(
                 modifier = Modifier.fillMaxWidth(),

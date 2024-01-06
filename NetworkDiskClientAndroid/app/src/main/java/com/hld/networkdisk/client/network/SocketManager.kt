@@ -2,7 +2,6 @@ package com.hld.networkdisk.client.network
 
 import android.util.Log
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
@@ -13,9 +12,9 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.Socket
+import java.net.SocketException
 import java.net.UnknownHostException
 import java.util.concurrent.atomic.AtomicInteger
-
 
 class SocketManager(private val ip: String, private val port: Int) {
     private lateinit var socket: Socket
@@ -28,9 +27,9 @@ class SocketManager(private val ip: String, private val port: Int) {
 
     private val messageVersion = AtomicInteger(0)
 
-    private val mapCallBack = mutableMapOf<Int, (String) -> Unit>()
+    private val mapCallBack = mutableMapOf<Int, suspend (String) -> Unit>()
 
-    suspend fun create() = withContext(Dispatchers.IO){
+    suspend fun create() = withContext(Dispatchers.IO) {
         socket = Socket(ip, port)
         printWriter = PrintWriter(socket.getOutputStream())
     }
@@ -60,9 +59,13 @@ class SocketManager(private val ip: String, private val port: Int) {
             var line = bufferedReader.readLine()
             while (line != null) {
                 emit(line)
-                line = if (!socket.isClosed) {
-                    bufferedReader.readLine()
-                } else {
+                line = try {
+                    if (!socket.isClosed) {
+                        bufferedReader.readLine()
+                    } else {
+                        null
+                    }
+                } catch (e: SocketException) {
                     null
                 }
             }
@@ -77,27 +80,22 @@ class SocketManager(private val ip: String, private val port: Int) {
     }
 
     // 客户端先发消息
-    suspend fun sendMessage(code: Int = 0, message: String, callBack: (String) -> Unit) =
-        withContext(Dispatchers.IO) {
-            val version = messageVersion.getAndIncrement()
-            Log.d(
-                TAG,
-                "=========sendMessage code:${code} version:${version}  port:${socket.localPort}  callBack：${callBack}"
-            )
-            mapCallBack[version] = callBack
-            val messageBean = BaseMessageBean(
-                version = version,
-                code = code,
-                message = message
-            )
+    suspend fun sendMessage(code: Int = 0, message: String, callBack: suspend (String) -> Unit) = withContext(Dispatchers.IO) {
+        val version = messageVersion.getAndIncrement()
+        Log.d(
+            TAG, "=========sendMessage code:${code} version:${version}  port:${socket.localPort}  callBack：${callBack}"
+        )
+        mapCallBack[version] = callBack
+        val messageBean = BaseMessageBean(
+            version = version, code = code, message = message
+        )
 
-            printWriter.println(gson.toJson(messageBean))
-            printWriter.flush()
-            Log.d(
-                TAG,
-                "=========sendMessage flush"
-            )
-        }
+        printWriter.println(gson.toJson(messageBean))
+        printWriter.flush()
+        Log.d(
+            TAG, "=========sendMessage flush"
+        )
+    }
 
     fun close() {
         isNeedRestart = false
@@ -110,7 +108,5 @@ class SocketManager(private val ip: String, private val port: Int) {
 }
 
 private data class BaseMessageBean(
-    val version: Int,
-    val code: Int,
-    val message: String
+    val version: Int, val code: Int, val message: String
 )

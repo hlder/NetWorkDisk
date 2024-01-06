@@ -2,18 +2,10 @@ package com.hld.networkdisk.server.network
 
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
 import com.hld.networkdisk.server.beans.MessageBean
 import com.hld.networkdisk.server.beans.MessageCodes
-import com.hld.networkdisk.server.beans.MessageTransferFileBean
 import com.hld.networkdisk.server.data.AppDatabase
-import com.hld.networkdisk.server.data.PreviewDao
-import com.hld.networkdisk.server.filemanager.FileManager
-import com.hld.networkdisk.server.filemanager.FileScan
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.io.File
 
 /**
  * 服务端提供接口
@@ -22,9 +14,9 @@ class ServerApi(
     private val activity: ComponentActivity,
     onCreateListener: ServerSocketManager.OnCreateListener
 ) {
-    private val lifecycleScope = activity.lifecycleScope
-    private val fileManager: FileManager = FileManager(activity)
     private val gson = Gson()
+
+    private val messageController = MessageController(activity)
 
     private val socketTransfer =
         SocketTransfer(activity, onCreateListener, object : SocketTransfer.OnRequestListener {
@@ -50,13 +42,19 @@ class ServerApi(
     private fun parseMessage(fromMessage: MessageBean): String {
         when (fromMessage.code) {
             MessageCodes.CODE_FILE_LIST -> { // 查询文件列表
-                val listFileBean = fileManager.queryFileList(fromMessage.message)
-                val listPreview = AppDatabase.getInstance(activity).previewDao().query(listFileBean.map { it.absolutePath }.toTypedArray())
-                listFileBean.forEach { item->
-                    val bean: PreviewDao.Bean? = listPreview?.find { it.fileAbsolutePath == item.absolutePath }
-                    item.previewImageBase64 = bean?.previewImageBase64
-                }
-                return resultSuccess(fromMessage, listFileBean)
+                return messageController.queryFileList(fromMessage)
+            }
+            MessageCodes.CODE_DO_COPY_FILE -> { // 执行复制文件
+                return messageController.doCopyFile(fromMessage)
+            }
+            MessageCodes.CODE_DO_MOVE_FILE -> { // 执行移动文件
+                return messageController.doMoveFile(fromMessage)
+            }
+            MessageCodes.CODE_DO_RE_NAME_FILE -> { // 执行重命名
+                return messageController.doRenameFile(fromMessage)
+            }
+            MessageCodes.CODE_DO_DELETE_FILE -> { // 执行删除文件
+                return messageController.doDeleteFile(fromMessage)
             }
         }
         return ""

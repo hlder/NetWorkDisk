@@ -12,4 +12,9 @@
     <color name="action_top_bar_text_color">#ff171717</color>
     <color name="divider_color">#c2c2c2</color>
     <color name="text_title_name">#ff070a1b</color>
+
+    <color name="footer_action_text_color">#000000</color>
+    <color name="footer_action_text_color_cannot_click">#d0d0d0</color>
+
+    <color name="bg_dialog_loading">#99000000</color>
 </resources>

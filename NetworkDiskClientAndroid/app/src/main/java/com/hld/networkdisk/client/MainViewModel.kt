@@ -32,11 +32,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     fun doStart(ip: String) {
         this.ip = ip
-        messageRequest = MessageRequest(ip, Constants.SERVER_PORT_MESSAGE)
+        messageRequest = MessageRequest(viewModelScope, ip, Constants.SERVER_PORT_MESSAGE)
         previewRequest = PreviewRequest(ip, Constants.SERVER_PORT_PREVIEW_IMAGE)
-        viewModelScope.launch {
-            messageRequest.start()
-        }
     }
 
     /**
@@ -50,8 +47,17 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     /**
      * 查询文件列表
      */
-    suspend fun queryFileList(filePath: String): List<FileBean>? =
-        messageRequest.queryFileList(filePath)
+    suspend fun queryFileList(filePath: String): List<FileBean>? = messageRequest.queryFileList(filePath)
+
+    /**
+     * 查询文件夹列表
+     */
+    suspend fun queryFileDirList(filePath: String): List<FileBean>? = messageRequest.queryFileDirList(filePath)
+
+    /**
+     * 刪除文件
+     */
+    suspend fun deleteFiles(listFilePath: List<String>) = messageRequest.deleteFiles(listFilePath)
 
     /**
      * 查询预览
@@ -61,47 +67,29 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     /**
      * 下载文件
      */
-    fun downLoadFile(
-        filePath: String,
-        fileSize: Long,
-        inLiveData: MutableLiveData<Float>?
-    ): LiveData<Float> {
+    fun downLoadFile(filePath: String, fileSize: Long, inLiveData: MutableLiveData<Float>?): LiveData<Float> {
         var liveData: MutableLiveData<Float>? = mapDownloadLiveData[filePath]
         if (liveData != null) {
             return liveData
         }
         liveData = inLiveData ?: MutableLiveData(0.0f)
         mapDownloadLiveData[filePath] = liveData
-        Log.i(TAG, "========================================1")
 
         viewModelScope.launch(Dispatchers.IO) {
-            Log.i(TAG, "========================================2")
-            FileTransferRequest.create(ip, portFile).doDownloadFile(
-                context = getApplication(),
-                yunFilePath = filePath,
-                fileSize = fileSize,
-                onProgress = {
-                    Log.i(TAG, "========================================4")
-                    liveData.postValue(it)
-                },
-                onSuccess = {
-                    Log.i(TAG, "========================================5")
-                    liveData.postValue(ON_DOWNLOAD_SUCCESS)
-                    mapDownloadLiveData.remove(filePath)
-                },
-                onError = {
-                    Log.i(TAG, "========================================6")
-                    liveData.postValue(ON_DOWNLOAD_ERROR)
-                    mapDownloadLiveData.remove(filePath)
-                }
-            )
-            Log.i(TAG, "========================================3")
+            FileTransferRequest.create(ip, portFile).doDownloadFile(context = getApplication(), yunFilePath = filePath, fileSize = fileSize, onProgress = {
+                liveData.postValue(it)
+            }, onSuccess = {
+                liveData.postValue(ON_DOWNLOAD_SUCCESS)
+                mapDownloadLiveData.remove(filePath)
+            }, onError = {
+                liveData.postValue(ON_DOWNLOAD_ERROR)
+                mapDownloadLiveData.remove(filePath)
+            })
         }
         return liveData
     }
 
     companion object {
-        private const val TAG = "MainViewModel"
         const val DOWNLOAD_STATUS_INIT = -999f
         const val ON_DOWNLOAD_SUCCESS = -10f
         const val ON_DOWNLOAD_ERROR = -5f

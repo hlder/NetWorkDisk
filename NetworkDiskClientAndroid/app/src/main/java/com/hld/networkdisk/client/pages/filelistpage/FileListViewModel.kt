@@ -3,10 +3,11 @@ package com.hld.networkdisk.client.pages.filelistpage
 import android.app.Application
 import android.graphics.Bitmap
 import android.util.LruCache
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
-import com.bumptech.glide.disklrucache.DiskLruCache
+import androidx.lifecycle.viewModelScope
 import com.hld.networkdisk.client.MainViewModel
 import com.hld.networkdisk.client.MainViewModel.Companion.DOWNLOAD_STATUS_INIT
 import com.hld.networkdisk.client.R
@@ -15,8 +16,10 @@ import com.hld.networkdisk.client.commons.Constants
 import com.hld.networkdisk.client.commons.base64ToBitmap
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
@@ -29,11 +32,23 @@ class FileListViewModel @Inject constructor(
     val filePath: String = savedStateHandle["filePath"] ?: ""
 
     var mainViewModel: MainViewModel? = null
-        set(value) {
-            field = value
-        }
 
-    private var listData: List<FileBean>? = null
+    // 选择状态，false表示点击状态，true表示选择状态
+    val selectedStatus = MutableLiveData(false)
+
+    // 选择状态时，选中的item列表
+    val selectedList = mutableListOf<FileBean>()
+
+    // 选中的size
+    val selectedListSize = MutableLiveData(0)
+
+    // 是否显示正在加载
+    val isShowLoading = MutableLiveData(true)
+
+    // 是否显示正在加载框
+    val isShowDialogLoading = MutableLiveData(false)
+
+    var listFiles: MutableList<FileBean>? = null
 
     private val mapPreviewImage = mutableMapOf<String, String>()
 
@@ -45,11 +60,23 @@ class FileListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 选择状态时。添加或移除
+     */
+    fun addOrRemoveSelected(item: FileBean) {
+        if (selectedList.contains(item)) {
+            selectedList.remove(item)
+        } else {
+            selectedList.add(item)
+        }
+        selectedListSize.value = selectedList.size
+    }
+
     fun getBitmapFromCache(base64Image: String): Bitmap? {
         var cacheBitmap = lruCache.get(base64Image)
         if (cacheBitmap == null) {
             cacheBitmap = base64Image.base64ToBitmap()
-            cacheBitmap?.let{
+            cacheBitmap?.let {
                 lruCache.put(base64Image, cacheBitmap)
             }
         }
@@ -97,16 +124,47 @@ class FileListViewModel @Inject constructor(
     /**
      * 查询列表
      */
-    fun doQueryList() = flow {
-        var list = listData
-        if (list != null) {
-            this.emit(list)
-        } else {
-            list = mainViewModel?.queryFileList("/$filePath")
-            listData = list
-            emit(list)
+    fun doQueryListFiles() = viewModelScope.launch(Dispatchers.IO) {
+        isShowLoading.postValue(true)
+        listFiles = mutableListOf()
+        mainViewModel?.queryFileList("/$filePath")?.let {
+            listFiles?.addAll(it)
         }
-    }.flowOn(Dispatchers.IO)
+        isShowLoading.postValue(false)
+    }
+
+    /**
+     * 删除选中的文件
+     */
+    fun doDeleteFiles() = viewModelScope.launch(Dispatchers.IO) {
+        isShowDialogLoading.postValue(true)
+        val baseFilePath = Constants.baseFilePath(getApplication())
+        val listFilePath: List<String> = selectedList.map {
+            deleteFileOrDir(File(baseFilePath + it.absolutePath))
+            it.absolutePath
+        }
+        mainViewModel?.deleteFiles(listFilePath)
+        listFiles?.removeAll(selectedList)
+        selectedList.clear()
+        selectedListSize.postValue(0)
+        selectedStatus.postValue(false)
+        isShowDialogLoading.postValue(false)
+        withContext(Dispatchers.Main) {
+            Toast.makeText(getApplication(), getApplication<Application>().getString(R.string.toast_delete_files_success), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // 递归删除文件和文件夹
+    private fun deleteFileOrDir(file: File) {
+        if (file.isDirectory) {
+            file.listFiles()?.forEach {
+                deleteFileOrDir(it)
+            }
+        }
+        if (file.exists()) {
+            file.delete()
+        }
+    }
 
     /**
      * 获取下载状态的liveData
@@ -127,14 +185,7 @@ class FileListViewModel @Inject constructor(
     /**
      * 执行下载动作
      */
-    fun downLoad(fileBean: FileBean) {
-        val liveData = getDownloadLiveData(fileBean)
-        mainViewModel?.downLoadFile(
-            fileBean.absolutePath,
-            fileBean.fileLength,
-            liveData
-        )
-    }
+    fun downLoad(fileBean: FileBean) = mainViewModel?.downLoadFile(fileBean.absolutePath, fileBean.fileLength, getDownloadLiveData(fileBean))
 
     companion object {
         private const val TAG = "FileListViewModel"

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">TestCompose</string>
+    <string name="navigation_tab1">微信</string>
+    <string name="navigation_tab2">通讯录</string>
+    <string name="navigation_tab3">发现</string>
+    <string name="navigation_tab4">我的</string>
+    <string name="title_tab1">微信(%s)</string>
+
+</resources>

@@ -19,6 +19,66 @@ class FileManager(context: Context) {
     private val baseFilePath = Constants.baseFilePath(context)
 
     /**
+     * 重命名
+     */
+    fun reNameFileName(filePath: String, newName: String) {
+        val file = File(baseFilePath + filePath)
+        if(file.exists()){
+            file.renameTo(File(file.absolutePath.replace(file.name, newName)))
+        }
+    }
+
+    /**
+     * 删除文件
+     */
+    fun deleteFile(filePath: String) {
+        val file = File(baseFilePath + filePath)
+        if (file.exists()) {
+            file.delete()
+        }
+    }
+
+    /**
+     * 执行文件复制
+     */
+    fun doCopyFile(fromPath: String, toPath: String): Boolean {
+        val fromFile = File(baseFilePath + fromPath)
+        if (!fromFile.exists()) {
+            return false
+        }
+        if (fromPath == toPath) {
+            return true
+        }
+        val toFile = File(baseFilePath + toPath)
+        if (toFile.parentFile?.exists() != true) {
+            toFile.parentFile?.mkdirs()
+        }
+        if (!toFile.exists()) {
+            toFile.createNewFile()
+        }
+        val fileInputStream = FileInputStream(fromFile)
+        val fileOutputStream = FileOutputStream(toFile)
+        try {
+            val buffer = ByteArray(1024)
+            var length: Int
+            while (fileInputStream.read(buffer).also { length = it } > 0) {
+                fileOutputStream.write(buffer, 0, length)
+            }
+            return true
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } catch (e: java.lang.RuntimeException) {
+            e.printStackTrace()
+        } finally {
+            fileInputStream.close()
+            fileOutputStream.close()
+        }
+        return true
+    }
+
+    /**
      * 查询文件列表
      */
     fun queryFileList(path: String): List<FileBean> {
@@ -42,12 +102,12 @@ class FileManager(context: Context) {
     /**
      * 接收客户端发来的文件
      */
-    fun receiveFileFromStream(inputStream: InputStream, bean: MessageTransferFileBean): Pair<Boolean,String> {
+    fun receiveFileFromStream(inputStream: InputStream, bean: MessageTransferFileBean): Pair<Boolean, String> {
         var fileOutputStream: FileOutputStream? = null
         try {
             Log.i(TAG, "=================================receiveFileFromStream :${baseFilePath + "/" + bean.filePath}")
             val outFile = fileReName(baseFilePath + "/" + bean.filePath) // 文件已存在，那么换个名字
-            if(outFile.parentFile?.exists() != true){
+            if (outFile.parentFile?.exists() != true) {
                 outFile.parentFile?.mkdirs()
             }
             Log.i(TAG, "=================================receiveFileFromStream outFile:${outFile.absolutePath}")
@@ -123,7 +183,7 @@ class FileManager(context: Context) {
         return file
     }
 
-    companion object{
+    companion object {
         private const val TAG = "FileManager"
     }
 }

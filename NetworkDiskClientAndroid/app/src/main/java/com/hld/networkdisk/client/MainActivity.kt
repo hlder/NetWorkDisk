@@ -14,7 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.hld.networkdisk.client.servers.UploadFileServer
-import com.hld.networkdisk.client.ui.ComposeTheme
+import com.hld.networkdisk.client.themes.ComposeTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+//        mainViewModel.doStart("220.196.194.151")
         mainViewModel.doStart("127.0.0.1")
         setContent {
 //            MaterialTheme{
